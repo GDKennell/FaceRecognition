@@ -26,6 +26,10 @@ PGMImage::PGMImage(PGMImage& rhs) {
   grey_lvl_ = rhs.grey_lvl_;
 }
 
+PGMImage::~PGMImage() {
+  clear();
+}
+
 // File I/O 
 void PGMImage::load(char* filename) {
   ifstream img_fs;

@@ -9,6 +9,8 @@ class PGMImage {
     PGMImage() : width_(0), height_(0), data(NULL) { }
     PGMImage(char* filename);
     PGMImage(PGMImage& rhs);
+
+    ~PGMImage();
     
     // File I/O 
     void load(char* filename);
