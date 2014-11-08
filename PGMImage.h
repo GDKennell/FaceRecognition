@@ -2,13 +2,14 @@
 #define PGMIMAGE_H
 
 #include <cassert>
+#include <utility>
 
 class PGMImage {
   public:
     // Constructors
     PGMImage() : width_(0), height_(0), data(NULL) { }
     PGMImage(char* filename);
-    PGMImage(PGMImage& rhs);
+    PGMImage(const PGMImage& rhs);
 
     ~PGMImage();
     
@@ -39,13 +40,13 @@ class PGMImage {
     // returns two PGMImages of the same dimensions
     // where each pixel is now the Local Binary Pattern
     // of the original pixel.
-    pair<PGMImage, PGMImage> lbps() const;
+    std::pair<PGMImage, PGMImage> lbps() const;
 
     // Returns the nearest lbp code to (x,y) that matches lbp
     // If lbp is non-uniform (more than two 0-1 transistions)
     // finds the nearest non-uniform code
     // If no match found, returns a point at distance width_
-    pair<int, int> nearest_lbp_match(int x, int y, unsigned int lbp);
+    std::pair<int, int> nearest_lbp_match(int x, int y, unsigned int lbp) const;
 
   private:
     // Both set to 0 if invalid

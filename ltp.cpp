@@ -1,3 +1,9 @@
+#include <iostream>
+#include <math.h>
+
+#include "PGMImage.h"
+
+using namespace std;
 
 float identity(float x) {
   return x;
@@ -7,21 +13,26 @@ float (*gain_fn)(float) = &identity;
 
 // Finds average euclidian distance between a given pattern in lbp1
 // and the nearest matching pattern in lbp2
-float total_lbp_distance(const PGMImg& lbp1, const PGMImg& lbp2);
+float total_lbp_distance(const PGMImage& lbp1, const PGMImage& lbp2);
 
 // Input two image file paths, output similarity
 int main(int argc, char** argv) {
   //calculate LTP's of each pixel in each image
   assert(argc == 3);
 
-  PGMImg img1(argv[1]), img2(argv[2]);
+  PGMImage img1(argv[1]), img2(argv[2]);
+  cout<<"Images loaded"<<endl;
   assert(img1 && img2);
   assert(img1.width() == img2.width() && img1.height() == img2.height());
 
-  pair<PGMImg, PGMImg> img1_lbps = img1.lbps();
-  pair<PGMImg, PGMImg> img2_lbps = img2.lbps();
+  cout<<"Calculating LBPs of image 1"<<endl;
+  pair<PGMImage, PGMImage> img1_lbps = img1.lbps();
+  cout<<"Calculating LBPs of image 2"<<endl;
+  pair<PGMImage, PGMImage> img2_lbps = img2.lbps();
 
+  cout<<"Calculating total distances for first LBP"<<endl;
   float total_dist_lbp1 = total_lbp_distance(img1_lbps.first, img2_lbps.first);
+  cout<<"Calculating total distances for second LBP"<<endl;
   float total_dist_lbp2 = total_lbp_distance(img1_lbps.second, img2_lbps.second);
 
   //optimal avg distance (given same image twice) == 0
@@ -31,20 +42,23 @@ int main(int argc, char** argv) {
   // especially once we start doing more interesting things than just
   // euclidian distance
 
-  cout<<"Sum of total distances between the two images (drumroll please)\n\n...\n\n...\n\n"<<total_dist_lbp1 + total_dist_lbp2<<endl;
+  cout<<"\n\nSum of total distances between the two images: "<<total_dist_lbp1 + total_dist_lbp2<<endl;
+  cout<<"average distance = "<<(total_dist_lbp1 + total_dist_lbp2)/((float)(2 * img1.width() * img2.height()))<<endl<<endl;
   return 0;
 }
 
-float total_lbp_distance(const PGMImg& lbp1, const PGMImg& lbp2) {
+float total_lbp_distance(const PGMImage& lbp1, const PGMImage& lbp2) {
   //for each pixel in img1, search for matching code in img2
   //record distance between pixel in img1 and pixel w/ matching code in img2
 
   float total_distance = 0.0f;
+  int num_points = 0;
   for (int x = 0; x < lbp1.width(); ++x) {
     for (int y = 0; y < lbp1.height(); ++y) {
       pair<int, int> match_loc = lbp2.nearest_lbp_match(x, y, lbp1(x,y));
-      float dist = sqrt(exp(x - match_loc.first, 2) + exp(y - match_loc.second, 2));
+      float dist = sqrt(pow(x - match_loc.first, 2) + pow(y - match_loc.second, 2));
       total_distance += gain_fn(dist);
+      ++num_points;
     }
   }
 
