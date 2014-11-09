@@ -8,13 +8,13 @@ class PGMImage {
   public:
     // Constructors
     PGMImage() : width_(0), height_(0), data(NULL) { }
-    PGMImage(char* filename);
+    PGMImage(const char* filename);
     PGMImage(const PGMImage& rhs);
 
     ~PGMImage();
     
     // File I/O 
-    void load(char* filename);
+    void load(const char* filename);
     void save(char* filename) const;
 
     // Accessors

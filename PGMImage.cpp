@@ -7,7 +7,7 @@ using namespace std;
 
 int my_abs(int x) { return (x < 0) ? -x : x; }
 
-PGMImage::PGMImage(char* filename) {
+PGMImage::PGMImage(const char* filename) {
   data = NULL;
   load(filename);
 }
@@ -34,7 +34,7 @@ PGMImage::~PGMImage() {
 }
 
 // File I/O 
-void PGMImage::load(char* filename) {
+void PGMImage::load(const char* filename) {
   ifstream img_fs;
   img_fs.open(filename);
 
