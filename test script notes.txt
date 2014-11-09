@@ -1,0 +1,44 @@
+Time benchmark:
+  49 seconds for 1000 runs
+  = 0.049 seconds / run
+
+  
+Dataset: 39 faces * 65 images = 2535 images
+         = ~3.2 million combinations
+	 = ~44 hours
+
+
+Using 10 faces * 65 images = 650 images
+        = ~211,000 combinations
+	= ~3 hours
+
+
+Using 15 faces * 15 images = 225 images
+	= ~25,000 combinations
+	= ~20 minutess
+
+a 1
+b 2
+c 3
+d 4
+e 5
+f 6
+g 7
+h 8
+i 9
+j 10
+k 11
+l 12
+m 13
+n 14
+o 15
+
+
+
+
+
+
+
+
+
+
