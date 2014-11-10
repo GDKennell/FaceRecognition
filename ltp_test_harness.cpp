@@ -18,7 +18,14 @@ deque<string> split_string(const string& str);
 int main(int argc, char **argv) {
   assert(argc == 2);
 
+  deque<float> within_avgs, without_avgs;
+
   ifstream test_file;
+
+  char *data_filename = "all_the_data.txt";
+  ofstream all_the_data;
+  all_the_data.open(data_filename);
+
   test_file.open(argv[1]);
   assert(test_file);
 
@@ -37,6 +44,7 @@ int main(int argc, char **argv) {
   float within_total_total_dist, within_total_avg_dist;
   int num_comparisons = 0;
   cout<<"calculating ltp average distance values for pairs of images of the same face"<<endl;
+  all_the_data << "#Average distance values of comparisons of same face: "<<endl;
   for (int i = 0; i < face_image_lists.size(); ++i) {
     deque<string>& same_face_images = face_image_lists[i];
     for (int j = 0; j < same_face_images.size() - 1; ++j) {
@@ -46,11 +54,23 @@ int main(int argc, char **argv) {
                                                       same_face_images[k].c_str());
         within_total_total_dist += comparison.first;
         within_total_avg_dist += comparison.second;
+        within_avgs.push_back(comparison.second);
       }
     }
     cout<<"  completed for combinations of face "<<i<<" / "<<face_image_lists.size()<<endl;
     cout<<"     - avg_dist: "<<within_total_avg_dist / (float)num_comparisons<<endl<<endl;
   }
+  cout<<"Sorting within averages "<<endl;
+
+  sort(within_avgs.begin(), within_avgs.end());
+
+  cout<<"Sorting complete. writing sorted within averages to file "<<data_filename<<endl;
+  all_the_data << "# Values for "<<within_avgs.size()<<" comparisons of same face:"<<endl;
+  for (int i = 0; i < within_avgs.size(); ++i) {
+    all_the_data<<within_avgs[i]<<endl;
+  }
+
+  all_the_data<<"#Average distance values for comparisons of different faces: "<<endl;
 
   cout<<"In comparing images of the same person:"<<endl;
   cout<<"\tavg total: "<< within_total_total_dist / (float)num_comparisons<<endl;
@@ -73,12 +93,25 @@ int main(int argc, char **argv) {
                                                         different_image_list[l].c_str());
           without_total_total_dist += comparison.first;
           without_total_avg_dist += comparison.second;
+          without_avgs.push_back(comparison.second);
         }
       }
       cout<<"  computed combinations of face "<<i<<" of "<<face_image_lists.size()<<" and face "<<k<<" of "<<face_image_lists.size()<<endl;
       cout<<"     - avg_dist: "<<without_total_avg_dist / (float)(num_comparisons)<<endl<<endl;
     }
   }
+  cout<<"Sorting without averages "<<endl;
+
+  sort(without_avgs.begin(), without_avgs.end());
+
+  cout<<"Sorting complete. writing sorted within averages to file "<<data_filename<<endl;
+  all_the_data << "# Values for "<<without_avgs.size()<<" comparisons of different face:"<<endl;
+  for (int i = 0; i < without_avgs.size(); ++i) {
+    all_the_data<<without_avgs[i]<<endl;
+  }
+
+  all_the_data.close();
+
   cout<<"In comparing images of different people:"<<endl;
   cout<<"\tavg total: "<< without_total_total_dist / (float)num_comparisons<<endl;
   cout<<"\tavg avg: "<< without_total_avg_dist / (float)num_comparisons<<endl<<endl;
