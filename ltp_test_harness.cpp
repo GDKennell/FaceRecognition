@@ -15,10 +15,20 @@ deque<string> split_string(const string& str);
 // Inputs test file where each line is a list of
 // image file names corresponding to the same face
 
+class data_pair {
+  public:
+    float val;
+    string desc;
+
+    bool operator<(const data_pair& rhs) const {
+      return (val < rhs.val);
+    }
+};
+
 int main(int argc, char **argv) {
   assert(argc == 2);
 
-  deque<float> within_avgs, without_avgs;
+  deque<data_pair> within_avgs, without_avgs;
 
   ifstream test_file;
 
@@ -54,7 +64,10 @@ int main(int argc, char **argv) {
                                                       same_face_images[k].c_str());
         within_total_total_dist += comparison.first;
         within_total_avg_dist += comparison.second;
-        within_avgs.push_back(comparison.second);
+        data_pair this_pair;
+        this_pair.val = comparison.second;
+        this_pair.desc = "#"+same_face_images[j]+" <-> "+same_face_images[k];
+        within_avgs.push_back(this_pair);
       }
     }
     cout<<"  completed for combinations of face "<<i<<" / "<<face_image_lists.size()<<endl;
@@ -67,7 +80,8 @@ int main(int argc, char **argv) {
   cout<<"Sorting complete. writing sorted within averages to file "<<data_filename<<endl;
   all_the_data << "# Values for "<<within_avgs.size()<<" comparisons of same face:"<<endl;
   for (int i = 0; i < within_avgs.size(); ++i) {
-    all_the_data<<within_avgs[i]<<endl;
+    all_the_data<<within_avgs[i].desc<<endl;
+    all_the_data<<within_avgs[i].val<<endl;
   }
 
   all_the_data<<"#Average distance values for comparisons of different faces: "<<endl;
@@ -93,7 +107,12 @@ int main(int argc, char **argv) {
                                                         different_image_list[l].c_str());
           without_total_total_dist += comparison.first;
           without_total_avg_dist += comparison.second;
-          without_avgs.push_back(comparison.second);
+  
+          data_pair this_pair;
+          this_pair.val = comparison.second;
+          this_pair.desc = "#"+current_image+" <-> "+different_image_list[l];
+
+          without_avgs.push_back(this_pair);
         }
       }
       cout<<"  computed combinations of face "<<i<<" of "<<face_image_lists.size()<<" and face "<<k<<" of "<<face_image_lists.size()<<endl;
@@ -107,7 +126,8 @@ int main(int argc, char **argv) {
   cout<<"Sorting complete. writing sorted within averages to file "<<data_filename<<endl;
   all_the_data << "# Values for "<<without_avgs.size()<<" comparisons of different face:"<<endl;
   for (int i = 0; i < without_avgs.size(); ++i) {
-    all_the_data<<without_avgs[i]<<endl;
+    all_the_data<<without_avgs[i].desc<<endl;
+    all_the_data<<without_avgs[i].val<<endl;
   }
 
   all_the_data.close();
