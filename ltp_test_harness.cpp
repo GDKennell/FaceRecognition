@@ -15,27 +15,10 @@ deque<string> split_string(const string& str);
 // Inputs test file where each line is a list of
 // image file names corresponding to the same face
 
-class data_pair {
-  public:
-    float val;
-    string desc;
-
-    bool operator<(const data_pair& rhs) const {
-      return (val < rhs.val);
-    }
-};
-
 int main(int argc, char **argv) {
   assert(argc == 2);
 
-  deque<data_pair> within_avgs, without_avgs;
-
   ifstream test_file;
-
-  char *data_filename = "all_the_data2.txt";
-  ofstream all_the_data;
-  all_the_data.open(data_filename);
-
   test_file.open(argv[1]);
   assert(test_file);
 
