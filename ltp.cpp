@@ -27,14 +27,12 @@ pair<float, float> ltp_comparison(const char *filename1, const char *filename2) 
     exit(1);
   }
 
-//  cout<<"Calculating LBPs of image 1"<<endl;
   pair<PGMImage, PGMImage> img1_lbps = img1.lbps();
 //  cout<<"Calculating LBPs of image 2"<<endl;
   pair<PGMImage, PGMImage> img2_lbps = img2.lbps();
 
 //  cout<<"Calculating total distances for first LBP"<<endl;
   float total_dist_lbp1 = total_lbp_distance(img1_lbps.first, img2_lbps.first);
-//  cout<<"Calculating total distances for second LBP"<<endl;
   float total_dist_lbp2 = total_lbp_distance(img1_lbps.second, img2_lbps.second);
 
   //optimal avg distance (given same image twice) == 0

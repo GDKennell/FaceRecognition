@@ -181,38 +181,77 @@ pair<int, int> PGMImage::nearest_lbp_match(int x, int y, unsigned int lbp) const
       cout<<"This is my conditional breakpoint lol"<<endl;
     }
     int top_y = y - search_box_radius, bottom_y = y + search_box_radius;
+    if(uniform) {
     for (int xi = x - search_box_radius; xi <= x + search_box_radius; ++xi) {
       if (xi < 1 || xi >= width_ - 1)
         continue;
       
       if (top_y >= 1) { 
         still_have_options = true;
-        if (data[xi][top_y] == lbp || (!uniform && !is_uniform(data[xi][top_y])))
+        if (data[xi][top_y] == lbp)
           return pair<int, int>(xi, top_y);
       }
       if (bottom_y < height_ - 1) {
         still_have_options = true;
-        if (data[xi][bottom_y] == lbp || (!uniform && !is_uniform(data[xi][bottom_y])))
+        if (data[xi][bottom_y] == lbp)
+          return pair<int, int>(xi, bottom_y);
+      }
+    }
+    }
+    else {
+    for (int xi = x - search_box_radius; xi <= x + search_box_radius; ++xi) {
+      if (xi < 1 || xi >= width_ - 1)
+        continue;
+      
+      if (top_y >= 1) { 
+        still_have_options = true;
+        if (!is_uniform(data[xi][top_y]))
+          return pair<int, int>(xi, top_y);
+      }
+      if (bottom_y < height_ - 1) {
+        still_have_options = true;
+        if (!is_uniform(data[xi][bottom_y]))
           return pair<int, int>(xi, bottom_y);
       }
     }
 
+    }
     // Left and right edges of search box
     int left_x = x - search_box_radius, right_x = x + search_box_radius;
+    if (uniform) {
     for (int yi = y - search_box_radius; yi <= y + search_box_radius; ++yi) {
       if (yi < 1 || yi >= height_ - 1)
         continue;
 
       if (left_x >= 1) {
         still_have_options = true;
-        if (data[left_x][yi] == lbp || (!uniform && !is_uniform(data[left_x][yi])))
+        if (data[left_x][yi] == lbp)
           return pair<int, int>(left_x, yi);
       }
       if (right_x < width_ - 1) {
         still_have_options = true;
-        if (data[right_x][yi] == lbp || (!uniform && !is_uniform(data[right_x][yi])))
+        if (data[right_x][yi] == lbp)
           return pair<int, int>(right_x, yi);
       }
+    }
+    }
+    else {
+   for (int yi = y - search_box_radius; yi <= y + search_box_radius; ++yi) {
+      if (yi < 1 || yi >= height_ - 1)
+        continue;
+
+      if (left_x >= 1) {
+        still_have_options = true;
+        if (!is_uniform(data[left_x][yi]))
+          return pair<int, int>(left_x, yi);
+      }
+      if (right_x < width_ - 1) {
+        still_have_options = true;
+        if (!is_uniform(data[right_x][yi]))
+          return pair<int, int>(right_x, yi);
+      }
+    }
+
     }
     ++search_box_radius;
   }
