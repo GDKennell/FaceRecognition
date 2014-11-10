@@ -8,7 +8,7 @@
 
 using namespace std;
 
-typedef deque<string> face_image_list_t;
+typedef deque<PGMImage> face_image_list_t;
 
 deque<string> split_string(const string& str);
 
@@ -40,14 +40,26 @@ int main(int argc, char **argv) {
   assert(test_file);
 
   deque<face_image_list_t> face_image_lists;
+  
+  deque<deque<string> >face_image_filenames;
 
   while(test_file) {
     string whole_line;
     getline(test_file, whole_line);
-    face_image_list_t list = split_string(whole_line);
+    deque<string> list = split_string(whole_line);
     if (list.size() < 2)
       break;
-    face_image_lists.push_back(list);
+    face_image_filenames.push_back(list);
+  }
+
+  face_images_lists.resize(face_image_filenames.size());
+  for (int i = 0; i < face_image_filenames.size(); ++i) {
+    face_images_lists[i].resize(face_image_filenames[i].size());
+    for (int j = 0; j < face_image_filenames[i].size(); ++j) {
+      face_images_lists[i][j].load(face_image_filenames[i][j]);
+      face_images_lists[i][j].preprocess();
+
+    }
   }
 
   // Within groups
@@ -60,8 +72,8 @@ int main(int argc, char **argv) {
     for (int j = 0; j < same_face_images.size() - 1; ++j) {
       for (int k = j+1; k < same_face_images.size(); ++k) {
         ++num_comparisons;
-        pair<float,float> comparison = ltp_comparison(same_face_images[j].c_str(),
-                                                      same_face_images[k].c_str());
+        pair<float,float> comparison = ltp_comparison(same_face_images[j],
+                                                      same_face_images[k]);
         within_total_total_dist += comparison.first;
         within_total_avg_dist += comparison.second;
         data_pair this_pair;
@@ -103,8 +115,9 @@ int main(int argc, char **argv) {
         string current_image = current_image_list[j];
         for (int l = 0; l < different_image_list.size(); ++l) {
           ++num_comparisons;
-          pair<float,float> comparison = ltp_comparison(current_image.c_str(),
-                                                        different_image_list[l].c_str());
+
+          pair<float,float> comparison = ltp_comparison(current_image,
+                                                        different_image_list[l]);
           without_total_total_dist += comparison.first;
           without_total_avg_dist += comparison.second;
   
