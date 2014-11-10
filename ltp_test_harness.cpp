@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 
   ifstream test_file;
 
-  char *data_filename = "all_the_data.txt";
+  char *data_filename = "all_the_data2.txt";
   ofstream all_the_data;
   all_the_data.open(data_filename);
 
@@ -94,9 +94,9 @@ int main(int argc, char **argv) {
   // Between non-same faces
   float without_total_total_dist, without_total_avg_dist;
   num_comparisons = 0;
-  for (int i = 0; i < face_image_lists.size(); ++i) {
+  for (int i = 0; i < face_image_lists.size() - 1; ++i) {
     deque<string>& current_image_list = face_image_lists[i];
-    for (int k = 0; k < face_image_lists.size(); ++k) {
+    for (int k = i + 1; k < face_image_lists.size(); ++k) {
       if (k == i) continue;
       deque<string>& different_image_list = face_image_lists[k];
       for (int j = 0; j < current_image_list.size(); ++j) {
