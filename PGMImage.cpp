@@ -9,6 +9,8 @@ int my_abs(int x) { return (x < 0) ? -x : x; }
 
 PGMImage::PGMImage(const char* filename) {
   data = NULL;
+  lpbs_upper = 0;
+  lpbs_lower = 0;
   load(filename);
 }
 
@@ -33,7 +35,7 @@ PGMImage::~PGMImage() {
   clear();
 }
 
-// File I/O 
+// File I/O -- puts image into data
 void PGMImage::load(const char* filename) {
   ifstream img_fs;
   img_fs.open(filename);
@@ -48,17 +50,17 @@ void PGMImage::load(const char* filename) {
 
   img_fs >> width_ >> height_ >> grey_lvl_;
   clear();
-  data = new unsigned int*[width_];
-  for (int x = 0; x < width_; ++x) {
-    data[x] = new unsigned int[height_];
+  data = new unsigned int*[height_];
+  for (int x = 0; x < height_; ++x) {
+    data[x] = new unsigned int[width_];
   }
 
   for (int y = 0; y < height_; ++y) {
     for (int x = 0; x < width_; ++x) {
       char ch;
       img_fs.read(&ch, 1);
-      data[x][y] = 0;
-      memcpy(&data[x][y], &ch, 1);
+      data[y][x] = 0;
+      memcpy(&data[y][x], &ch, 1);
     }
   }
 }
@@ -75,7 +77,7 @@ void PGMImage::save(char* filename) const {
   
   for (int y = 0; y < height_; ++y) {
     for (int x = 0; x < width_; ++x) {
-      new_image.write((const char*)&data[x][y], 1);
+      new_image.write((const char*)&data[y][x], 1);
     }
   }
   new_image.close();
@@ -83,7 +85,7 @@ void PGMImage::save(char* filename) const {
 
 void PGMImage::clear() {
   if (data) {
-    for (int x = 0; x < width_; ++x) {
+    for (int x = 0; x < height_; ++x) {
       delete[] data[x];
     }
     delete[] data;
@@ -102,6 +104,50 @@ void set_bit(unsigned int& number, int bit_i, bool value) {
   unsigned int val = value ? 1 : 0;
   val = val << bit_i;
   number |= val;
+}
+
+// return lbp_lower, lbp_upper as unsigned ints
+pair<unsigned int, unsigned int> get_code(unsigned int values[7]){
+  
+}
+
+int compare_cells(int center, int outer){
+  if(my_abs(outer - center) < ltp_tolerance)
+    return 0;
+  else if(outer - center > 0)
+    return 1;
+  else 
+    return -1;
+}
+
+void PGMImage::set_lbps() {
+  if(!(lbps_upper && lbps_lower)) {
+    lbps_upper = new unsigned int *[height_];
+    lbps_lower = new unsigned int *[height_];
+    for(int i = 0; i < height_; i++){
+      lbps_upper[i] = new unsigned int *[width_];
+      lbps_lower[i] = new unsigned int *[width_];
+    }
+  }
+  unsigned int code[7];
+  for(int i = 1; i < height_ - 1; i++){
+    for(int j = 1; j < width_ - 1; j++){
+      //  0 1 2
+      //  7   3
+      //  6 5 4
+      int center = data[i][j];
+      code[0] = compare_cells(center, data[i-1][j-1]);
+      code[1] = compare_cells(center, data[i-1][j]);
+      code[2] = compare_cells(center, data[i-1][j+1]);
+      code[3] = compare_cells(center, data[i][j+1]);
+      code[4] = compare_cells(center, data[i+1][j+1]);
+      code[5] = compare_cells(center, data[i+1][j]);
+      code[6] = compare_cells(center, data[i+1][j-1]);
+      code[7] = compare_cells(center, data[i][j-1]);
+      pair<unsigned int, unsigned int> lbp = get_code(code);
+    
+    }
+  }
 }
 
 pair<PGMImage, PGMImage> PGMImage::lbps() const {

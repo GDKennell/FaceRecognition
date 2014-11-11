@@ -57,6 +57,10 @@ class PGMImage {
 
     // Two dimensional array of width x height
     unsigned int **data;
+
+    // Two dimensional array of LPBs
+    unsigned int **lpbs_upper;
+    unsigned int **lpbs_lower;
 };
 
 #endif
