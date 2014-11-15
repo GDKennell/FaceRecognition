@@ -3,7 +3,10 @@
 
 #include "PGMImage.h"
 
+#define UNIFORM -1
+
 using namespace std;
+
 
 int my_abs(int x) { return (x < 0) ? -x : x; }
 
@@ -106,11 +109,27 @@ void set_bit(unsigned int& number, int bit_i, bool value) {
   number |= val;
 }
 
-// return lbp_lower, lbp_upper as unsigned ints
-pair<unsigned int, unsigned int> get_code(unsigned int values[7]){
-  
+// return lbp_upper, lbp_upper as a pair of unsigned ints
+pair<unsigned int, unsigned int> ltp_to_lbps(unsigned int ltp[num_neighbors]){
+  int lbp_lower, lbp_upper;
+  lbp_lower = lbp_upper = 0;
+  for(i = 0; i < num_neighbors; i++){
+    if(ltp[i] == -1){
+      set_bit(lower, i, 1);
+    }
+    else if(ltp[i] == 1){
+      set_bit(upper, i, 1);
+    }
+  }
+  if(!is_uniform(lbp_lower))
+    lbp_lower = UNIFORM;
+  if(!is_uniform(lbp_upper))
+    lbp_upper = UNIFORM;
+  pair<int, int> lbps(lbp_upper, lbp_lower);
+  return lbps;
 }
 
+// return 0, 1, or -1 depending on ltp_tolerance
 int compare_cells(int center, int outer){
   if(my_abs(outer - center) < ltp_tolerance)
     return 0;
@@ -120,6 +139,7 @@ int compare_cells(int center, int outer){
     return -1;
 }
 
+// set or reset the lbps_upper and lbps_lower arrays
 void PGMImage::set_lbps() {
   if(!(lbps_upper && lbps_lower)) {
     lbps_upper = new unsigned int *[height_];
@@ -129,71 +149,21 @@ void PGMImage::set_lbps() {
       lbps_lower[i] = new unsigned int *[width_];
     }
   }
-  unsigned int code[7];
+  unsigned int ltp[num_neighbors];
   for(int i = 1; i < height_ - 1; i++){
     for(int j = 1; j < width_ - 1; j++){
-      //  0 1 2
-      //  7   3
-      //  6 5 4
       int center = data[i][j];
-      code[0] = compare_cells(center, data[i-1][j-1]);
-      code[1] = compare_cells(center, data[i-1][j]);
-      code[2] = compare_cells(center, data[i-1][j+1]);
-      code[3] = compare_cells(center, data[i][j+1]);
-      code[4] = compare_cells(center, data[i+1][j+1]);
-      code[5] = compare_cells(center, data[i+1][j]);
-      code[6] = compare_cells(center, data[i+1][j-1]);
-      code[7] = compare_cells(center, data[i][j-1]);
-      pair<unsigned int, unsigned int> lbp = get_code(code);
-    
-    }
-  }
-}
-
-pair<PGMImage, PGMImage> PGMImage::lbps() const {
-  // For a given ternary code [-1, 0, 1]
-  // LBP1 will map [-1, 0] -> [0], [1] -> [1]
-  // LBP2 will map [-1] -> [1], [0, 1] -> [0]
-
-  PGMImage lbp1(*this), lbp2(*this);
-
-  for (int x = 1; x < width_ - 1; ++x) {
-    for (int y = 1; y < height_ - 1; ++y) {
-      lbp1(x,y) = 0;
-      lbp2(x,y) = 0;
-
-      int offsets[num_neighbors][2] = { {-1, -1},
-                                        {0, -1},
-                                        {1, -1},
-                                        {1, 0},
-                                        {1, 1},
-                                        {0, 1},
-                                        {-1, 1},
-                                        {-1, 0} };
-
-      unsigned int this_pixel = data[x][y];
-      for (int i = 0; i < num_neighbors; ++i) {
-        unsigned int neighbor_pixel = data[x+offsets[i][0]][y+offsets[i][1]];
-        // Within tolerance, both get 0
-        if (my_abs(neighbor_pixel - this_pixel) <= ltp_tolerance) {
-          set_bit(lbp1(x,y), i, false);
-          set_bit(lbp2(x,y), i, false);
-        }
-        // neighbor > this: 1 for lbp1, 0 for lbp2
-        else if (neighbor_pixel > this_pixel) {
-          set_bit(lbp1(x,y), i, true);
-          set_bit(lbp2(x,y), i, false);
-        }
-        // neighbor < this: 0 for lbp1, 1 for lbp2
-        else {
-          set_bit(lbp1(x,y), i, false);
-          set_bit(lbp2(x,y), i, true);
-        }
+      vector<int, int> perimeter = manhattan_circle(i, j, 1);
+      for(int i = 0; i < num_neighbors; i++){
+        int x = perimeter[i].first;
+        int y = perimeter[i].second;
+        ltp[i] = compare_cells(center, data[x][y]);
       }
+      pair<unsigned int, unsigned int> lbps = ltp_to_lbps(ltp);
+      lbps_upper[i][j] = lbp.first;
+      lbps_lower[i][j] = lbp.second;
     }
   }
-
-  return pair<PGMImage, PGMImage>(lbp1, lbp2);
 }
 
 bool is_uniform(unsigned int lbp) {
@@ -208,99 +178,78 @@ bool is_uniform(unsigned int lbp) {
   return (num_transitions <= 2);
 }
 
-pair<int, int> PGMImage::nearest_lbp_match(int x, int y, unsigned int lbp) const {
+vector<pair<int, int>> manhattan_circle(int center_x, int center_y, int radius){
+  // This creates a vector of indices in the shape of a circle under the
+  // Manhattan metric. EG:
+  // [-1,1]   [0,1]   [1,1]
+  // [-1,0]           [1,0]
+  // [-1,-1]  [0,-1]  [1,-1]
+  // unrolls to 
+  // [[-1,1], [0,1], [1,1], [1,0], [1,-1], [0,-1], [-1,-1], [-1,0]]
+  vector<pair<int, int>> perimeter;
+  // Top row of the circle
+  for(int i = -radius; i <= radius; i++){
+    pair<int, int> square(center_x + i, center_y + radius);
+    perimeter.push_back(square);
+  }
+  // Right descending column
+  for(int i = radius - 1; i >= -radius; i--){
+    pair<int, int> square(center_x + radius, center_y + i);
+    perimeter.push_back(square);
+  }
+  // Bottom row backwards
+  for(int i = radius - 1; i >= -radius; i--){
+    pair<int, int> square(center_x + i, center_y - radius);
+    perimeter.push_back(square);
+  }
+  // Left ascending column
+  for(int i = -radius + 1; i <= radius - 1; i++){
+    pair<int, int> square(center_x - radius, center_y + i);
+    perimeter.push_back(square);
+  }
+  return perimeter;
+}
+
+double PGMImage::lbp_match_distance(int x, int y, pair<int, int> ltp) const {
+  // Return the average of the distance between the upper and lower lbps
+
   // Using boxes of increasing size. Not quite optimal - should be 
   // a round search circle of given radius to minimzie euclidian distance
   // but this will do for now
+  const int fallthrough_max_radius = 200; // NOTE THAT CURRENTLY, this is
+                                          // TOTALLY ARBITRARY -- todo
+  int upper_match_radius = -1;
+  int lower_match_radius = -1;
 
-  int search_box_radius = 1;
-  bool uniform = is_uniform(lbp);
-
-  if (data[x][y] == lbp || (!uniform && !is_uniform(data[x][y])))
-    return pair<int, int>(x,y);
-
-  bool still_have_options = true;
-  while(still_have_options) {
-    still_have_options = false;
-    // Top and bottom of search box
-    if (search_box_radius >= 3 * height_) {
-      cout<<"This is my conditional breakpoint lol"<<endl;
-    }
-    int top_y = y - search_box_radius, bottom_y = y + search_box_radius;
-    if(uniform) {
-    for (int xi = x - search_box_radius; xi <= x + search_box_radius; ++xi) {
-      if (xi < 1 || xi >= width_ - 1)
-        continue;
-      
-      if (top_y >= 1) { 
-        still_have_options = true;
-        if (data[xi][top_y] == lbp)
-          return pair<int, int>(xi, top_y);
+  for(int search_radius = 0; search_radius <= max_radius; i++){
+    auto search_list = manhattan_circle(x, y, search_radius);
+    // Go along path of manhattan radius search_radius searching for the best match
+    for(auto i = search_list.begin(); i != search_list.end(); i++){
+      if(ltp.first = lbp_upper[i->first][i->second]){
+        if(upper_match_radius != -1){
+          double dist = sqrt(pow(i->first - x, 2) + pow(i->second - y, 2));
+          upper_match_radius = min(upper_match_radius, dist);
       }
-      if (bottom_y < height_ - 1) {
-        still_have_options = true;
-        if (data[xi][bottom_y] == lbp)
-          return pair<int, int>(xi, bottom_y);
+      if(ltp.second = lbp_lower[i->first][i->second]){
+        if(lower_match_radius != -1){
+          double dist = sqrt(pow(i->first - x, 2) + pow(i->second - y, 2));
+          upper_match_radius = min(upper_match_radius, dist);
+      }
+      // Once we've found matches, exit out. Note that we should really be inscribing
+      // a circle around our current radius, checking its radius, and then continuing
+      // the search within that manhattan distance.
+      if(upper_match_radius != -1 && lower_match_radius != -1){
+        search_radius = max_radius + 1;
+        i = search_list.end();
+        break;
       }
     }
-    }
-    else {
-    for (int xi = x - search_box_radius; xi <= x + search_box_radius; ++xi) {
-      if (xi < 1 || xi >= width_ - 1)
-        continue;
-      
-      if (top_y >= 1) { 
-        still_have_options = true;
-        if (!is_uniform(data[xi][top_y]))
-          return pair<int, int>(xi, top_y);
-      }
-      if (bottom_y < height_ - 1) {
-        still_have_options = true;
-        if (!is_uniform(data[xi][bottom_y]))
-          return pair<int, int>(xi, bottom_y);
-      }
-    }
-
-    }
-    // Left and right edges of search box
-    int left_x = x - search_box_radius, right_x = x + search_box_radius;
-    if (uniform) {
-    for (int yi = y - search_box_radius; yi <= y + search_box_radius; ++yi) {
-      if (yi < 1 || yi >= height_ - 1)
-        continue;
-
-      if (left_x >= 1) {
-        still_have_options = true;
-        if (data[left_x][yi] == lbp)
-          return pair<int, int>(left_x, yi);
-      }
-      if (right_x < width_ - 1) {
-        still_have_options = true;
-        if (data[right_x][yi] == lbp)
-          return pair<int, int>(right_x, yi);
-      }
-    }
-    }
-    else {
-   for (int yi = y - search_box_radius; yi <= y + search_box_radius; ++yi) {
-      if (yi < 1 || yi >= height_ - 1)
-        continue;
-
-      if (left_x >= 1) {
-        still_have_options = true;
-        if (!is_uniform(data[left_x][yi]))
-          return pair<int, int>(left_x, yi);
-      }
-      if (right_x < width_ - 1) {
-        still_have_options = true;
-        if (!is_uniform(data[right_x][yi]))
-          return pair<int, int>(right_x, yi);
-      }
-    }
-
-    }
-    ++search_box_radius;
   }
-  return pair<int, int>(x+width_, y);
+  if(upper_match_radius == -1)
+    upper_match_radius = fallthrough_max_radius;
+  if(lower_match_radius == -1)
+    lower_match_radius = fallthrough_max_radius;
+  
+  return (upper_match_radius + lower_match_radius) / 2;
 }
 

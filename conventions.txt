@@ -1,0 +1,3 @@
+Here are some conventions:
+image coordinates are given in [x, y]. I have no idea of orientation, nor do I think it should matter.
+uniform lbps are unsigned integers equal to -1. I'm defined UNIFORM in PGMImage.cpp as -1.
