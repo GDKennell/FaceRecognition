@@ -22,7 +22,6 @@ float total_lbp_distance(unsigned int** lbp1, unsigned int** lbp2, int width, in
 pair<float, float> ltp_comparison(const PGMImage& img1, const PGMImage& img2) {
   //calculate LTP's of each pixel in each image
 //  cout<<"Images loaded"<<endl;
-
   assert(img1 && img2);
   if (!(img1.width() == img2.width() && img1.height() == img2.height())) {
     cout<<"can't compare images of diffferent sizes. given \""<<filename1<<"\" of dimensions "<<img1.width()<<"x"<<img1.height();
