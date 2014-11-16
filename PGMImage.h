@@ -41,6 +41,7 @@ class PGMImage {
     // where each pixel is now the Local Binary Pattern
     // of the original pixel.
     std::pair<PGMImage, PGMImage> lbps() const;
+    void identity_preprocess(); // Do nothing
 
     // Returns the nearest lbp code to (x,y) that matches lbp
     // If lbp is non-uniform (more than two 0-1 transistions)
@@ -59,8 +60,7 @@ class PGMImage {
     unsigned int **data;
 
     // Two dimensional array of LPBs
-    unsigned int **lpbs_upper;
-    unsigned int **lpbs_lower;
+    pair<uint, uint> **lpbs;
 };
 
 #endif
