@@ -140,13 +140,11 @@ int compare_cells(int center, int outer){
 }
 
 // set or reset the lbps_upper and lbps_lower arrays
-void PGMImage::set_lbps() {
-  if(!(lbps_upper && lbps_lower)) {
-    lbps_upper = new unsigned int *[height_];
-    lbps_lower = new unsigned int *[height_];
+void PGMImage::set_ltps() {
+  if(!ltps) {
+    lbts = new pair<uint, uint> *[height_];
     for(int i = 0; i < height_; i++){
       lbps_upper[i] = new unsigned int *[width_];
-      lbps_lower[i] = new unsigned int *[width_];
     }
   }
   unsigned int ltp[num_neighbors];
@@ -210,7 +208,7 @@ vector<pair<int, int>> manhattan_circle(int center_x, int center_y, int radius){
   return perimeter;
 }
 
-double PGMImage::lbp_match_distance(int x, int y, pair<int, int> ltp) const {
+double PGMImage::lbp_match_distance(int x, int y, pair<uint, uint> ltp) const {
   // Return the average of the distance between the upper and lower lbps
 
   // Using boxes of increasing size. Not quite optimal - should be 
@@ -253,3 +251,11 @@ double PGMImage::lbp_match_distance(int x, int y, pair<int, int> ltp) const {
   return (upper_match_radius + lower_match_radius) / 2;
 }
 
+double PGMImage::average_ltp_distance(PGMImage& other){
+  double total_distance = 0;
+  for(int i = 1; i < width_ - 1; i++)
+    for(int j = 1; j < height_ - 1; j++)
+      total_distance += lbp_match_distance(i, j, other.ltps[i][j]);
+
+  return total_distance /= ((width_ - 2)*(height_ - 2));
+}
