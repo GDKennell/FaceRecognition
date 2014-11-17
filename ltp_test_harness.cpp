@@ -3,8 +3,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 
-#include "ltp.h"
+#include "PGMImage.h"
 
 using namespace std;
 
@@ -24,7 +25,7 @@ int main(int argc, char **argv) {
 
   deque<face_image_list_t> face_image_lists;
   
-  deque<deque<string>>face_image_filenames;
+  deque<deque<string> >face_image_filenames;
 
   while(test_file) {
     string whole_line;
@@ -35,31 +36,41 @@ int main(int argc, char **argv) {
     face_image_filenames.push_back(list);
   }
 
-  face_images_lists.resize(face_image_filenames.size());
+  cout << "loading images" << endl;
+  face_image_lists.resize(face_image_filenames.size());
   for (int i = 0; i < face_image_filenames.size(); ++i) {
-    face_images_lists[i].resize(face_image_filenames[i].size());
+    face_image_lists[i].resize(face_image_filenames[i].size());
     for (int j = 0; j < face_image_filenames[i].size(); ++j) {
-      face_images_lists[i][j].load(face_image_filenames[i][j]);
-      face_images_lists[i][j].preprocess_identity();
+      //cout << "loading image set: " << i << " filename: " << j << endl;
+      //cout << "filename:\t" << face_image_filenames[i][j] << endl;
+      face_image_lists[i][j].load(face_image_filenames[i][j]);
+      //cout << "loaded. preprocessing..." << endl;
+      face_image_lists[i][j].identity_preprocess();
+      //cout << "preprocessed." << endl;
     }
   }
+  cout << "images loaded" << endl;
 
   // intergroup_distances[i][j] represents the dstance between the ith and jth groups
   vector<vector<double>> intergroup_distances;
-  intergroup_distances.resize(face_images_lists.size());
-  for(auto i = intergroup_distances.begin; i != intergroup_distances.end(); i++){
-    i->resize(face_images_lists.size());
+  intergroup_distances.resize(face_image_lists.size());
+  for(auto i = intergroup_distances.begin(); i != intergroup_distances.end(); i++){
+    i->resize(face_image_lists.size());
   }
-  
-  for(int i = 0; i < face_images_lists.size(); i++){
+ 
+  cout << "beginning comparisons" << endl;
+  for(int i = 0; i < face_image_lists.size(); i++){
     for(int j = 0; j < face_image_lists.size(); j++){
+      cout << "Computing distance between face sets " << i << " and " << j << endl;
       double total_distance_ij = 0;
       int comparisons = 0;
       for(int k = 0; k < face_image_lists[i].size(); k++){
         for(int l = 0; l < face_image_lists[j].size(); l++){
           if(!(i == j && k == l)){
             comparisons++;
-            total_distance_ij += face_image_lists[i][k].average_ltp_distance(face_image_lists[j][l]);
+            double d = face_image_lists[i][k].average_ltp_distance(face_image_lists[j][l]);
+            cout << "distance(face[" << i << "][" << k << "], face[" << j << "][" << l << "]) =\t" << d << endl;
+            total_distance_ij += d;
           }
         }
       }
@@ -67,7 +78,15 @@ int main(int argc, char **argv) {
       intergroup_distances[i][j] = average_distance_ij;
     }
   }
+  cout << "comparisons finished." << endl;
 
+  cout << "COMPARISON MATRIX:\n";
+  for(int i = 0; i < face_image_lists.size(); i++){
+    for(int j = 0; j < face_image_lists.size(); j++){
+      printf("%0.2f ", intergroup_distances[i][j]);
+    }
+    cout << endl;
+  }
 }
 
 deque<string> split_string(const string& str) {

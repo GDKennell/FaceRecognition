@@ -1,26 +1,33 @@
 #ifndef PGMIMAGE_H
-    unsigned int **lpbs_lower;
 #define PGMIMAGE_H
 
 #include <cassert>
+#include <vector>
+#include <iostream>
+#include <cmath>
+#include <fstream>
+#include <string.h>
 #include <utility>
+#include <string>
+typedef unsigned int uint;
+using namespace std;
 
 class PGMImage {
   public:
     // Constructors
-    PGMImage() : width_(0), height_(0), data(NULL) { }
+    PGMImage() : width_(0), height_(0), data(NULL), ltps(NULL) { }
     PGMImage(const char* filename);
     PGMImage(const PGMImage& rhs);
 
     ~PGMImage();
     
     // File I/O 
-    void load(const char* filename);
+    void load(const string);
     void save(char* filename) const;
 
     // Accessors
     pair<uint, uint> operator()(int x, int y) const
-    { assert(*this); return lbps[x][y]; }
+    { assert(*this); return ltps[x][y]; }
 
     int width() const
     { return width_; }
@@ -48,7 +55,7 @@ class PGMImage {
   private:
     // return the average of the lower and upper binary pattern distances
     // from point (x, y) in this image 
-    double lbp_match_distance(int x, int y, pair<uint, uint> ltp) const;
+    double ltp_match_distance(int x, int y, pair<uint, uint> ltp) const;
     
     // compute (and allocate if necessary) the ltps from the current data
     void set_ltps();

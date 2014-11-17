@@ -3,6 +3,7 @@
 
 #include "PGMImage.h"
 
+typedef unsigned int uint;
 using namespace std;
 
 float identity(float x) {

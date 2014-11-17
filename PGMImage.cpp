@@ -1,17 +1,14 @@
-#include <iostream>
-#include <cmath>
-#include <fstream>
 #include "PGMImage.h"
 
 #define UNIFORM -1
-typedef uint uint;
+typedef unsigned int uint;
 
 using namespace std;
 
 int my_abs(int x) { return (x < 0) ? -x : x; }
 
 PGMImage::PGMImage(const char* filename) {
-  data = NULL;
+  data = 0;
   ltps = 0;
   load(filename);
 }
@@ -38,9 +35,11 @@ PGMImage::~PGMImage() {
 }
 
 // File I/O -- puts image into data
-void PGMImage::load(const char* filename) {
+void PGMImage::load(const string filename) {
   ifstream img_fs;
+  //cout << "in PGMImage::load:\topening filename..." << endl;
   img_fs.open(filename);
+  //cout << "in PGMImage::load:\topened..." << endl;
 
   if (!img_fs) {
     cerr<<"Couldn't open image \""<<filename<<"\""<<endl;
@@ -48,7 +47,6 @@ void PGMImage::load(const char* filename) {
   }
   string first_ln, comment_ln;
   getline(img_fs, first_ln);
-//  getline(img_fs, comment_ln);
 
   img_fs >> width_ >> height_ >> grey_lvl_;
   clear();
@@ -57,14 +55,18 @@ void PGMImage::load(const char* filename) {
     data[x] = new uint[height_];
   }
 
-  for (int x = 0; x < width_; ++x) {
-    for (int y = 0; y < height_; ++y) {
+  //cout << "in PGMImage::load:\tdata arrays allocated" << endl;
+  
+  for (int y = 0; y < height_; ++y) {
+    for (int x = 0; x < width_; ++x) {
       char ch;
       img_fs.read(&ch, 1);
       data[x][y] = 0;
       memcpy(&data[x][y], &ch, 1);
     }
   }
+
+  //cout << "in PGMImage::load:\tdone. Returning..." << endl;
 }
 
 void PGMImage::save(char* filename) const {
@@ -89,20 +91,24 @@ void PGMImage::clear() {
   if (data) {
     for (int x = 0; x < width_; ++x) {
       delete[] data[x];
+      data[x] = 0;
     }
     delete[] data;
+    data = 0;
   }
   if(ltps) {
     for(int i = 0; i < width_; i++) {
       delete[] ltps[i];
+      ltps[i] = 0;
     }
     delete[] ltps;
+    ltps = 0;
   }
 }
 
 // Preprocessing routines
 
-void PGMImage::preprocess_identity(){
+void PGMImage::identity_preprocess(){
   set_ltps();
 }
 
@@ -121,27 +127,39 @@ void set_bit(uint& number, int bit_i, bool value) {
   number |= val;
 }
 
+bool is_uniform(uint lbp) {
+  int num_transitions = 0;
+  for (int i = 0; i < num_neighbors; ++i) {
+    bool this_bit = ((lbp & (1 << i)) != 0);
+    bool next_bit = ((lbp & (1 << ((i + 1) % num_neighbors))) != 0);
+
+    if (this_bit != next_bit)
+      ++num_transitions;
+  }
+  return (num_transitions <= 2);
+}
+
 // return lbp_upper, lbp_upper as a pair of uints
 pair<uint, uint> ltp_to_lbps(int ltp[num_neighbors]){
   uint lbp_lower, lbp_upper;
   lbp_lower = lbp_upper = 0;
-  for(i = 0; i < num_neighbors; i++){
+  for(int i = 0; i < num_neighbors; i++){
     if(ltp[i] == -1){
-      set_bit(lower, i, 1);
-      set_bit(upper, i, 0);
+      set_bit(lbp_lower, i, 1);
+      set_bit(lbp_upper, i, 0);
     }
     else if(ltp[i] == 1){
-      set_bit(upper, i, 1);
-      set_bit(lower, i, 0);
+      set_bit(lbp_upper, i, 1);
+      set_bit(lbp_lower, i, 0);
     }
     else{
-      set_bit(lower, i, 0);
-      set_bit(upper, i, 0);
+      set_bit(lbp_lower, i, 0);
+      set_bit(lbp_upper, i, 0);
     }
   }
-  if(!is_uniform(lbp_lower))
+  if(is_uniform(lbp_lower))
     lbp_lower = UNIFORM;
-  if(!is_uniform(lbp_upper))
+  if(is_uniform(lbp_upper))
     lbp_upper = UNIFORM;
   pair<uint, uint> lbps(lbp_upper, lbp_lower);
   return lbps;
@@ -155,41 +173,6 @@ int compare_cells(int center, int outer){
     return 1;
   else 
     return -1;
-}
-
-// set or reset the lbps_upper and lbps_lower arrays
-void PGMImage::set_ltps() {
-  if(!ltps) {
-    ltps = new pair<uint, uint> *[height_];
-    for(int i = 0; i < height_; i++){
-      ltps[i] = new unsigned int *[width_];
-    }
-  }
-  uint ltp[num_neighbors];
-  for(int i = 1; i < height_ - 1; i++){
-    for(int j = 1; j < width_ - 1; j++){
-      int center = data[i][j];
-      vector<int, int> perimeter = manhattan_circle(i, j, 1);
-      for(int i = 0; i < num_neighbors; i++){
-        int x = perimeter[i].first;
-        int y = perimeter[i].second;
-        ltp[i] = compare_cells(center, data[x][y]);
-      }
-      ltps[i][j] = ltp_to_lbps(ltp);
-    }
-  }
-}
-
-bool is_uniform(uint lbp) {
-  int num_transitions = 0;
-  for (int i = 0; i < num_neighbors; ++i) {
-    bool this_bit = ((lbp & (1 << i)) != 0);
-    bool next_bit = ((lbp & (1 << ((i + 1) % num_neighbors))) != 0);
-
-    if (this_bit != next_bit)
-      ++num_transitions;
-  }
-  return (num_transitions <= 2);
 }
 
 vector<pair<int, int>> manhattan_circle(int center_x, int center_y, int radius){
@@ -224,6 +207,42 @@ vector<pair<int, int>> manhattan_circle(int center_x, int center_y, int radius){
   return perimeter;
 }
 
+// set or reset the lbps_upper and lbps_lower arrays
+void PGMImage::set_ltps() {
+  if(!ltps) {
+    //cout << "in PGMImage::set_ltps:\tallocating arrays" << endl;
+    ltps = new pair<uint, uint> *[width_];
+    for(int i = 0; i < width_; i++){
+      ltps[i] = new pair<uint, uint> [height_];
+    }
+  }
+  //cout << "in PGMImage::set_ltps:\tarrays allocated" << endl;
+  int ltp[num_neighbors];
+  for(int i = 1; i < width_- 1; i++){
+    for(int j = 1; j < height_ - 1; j++){
+      //cout << "in PGMImage::set_ltps:\taccessing data[" << i << "]["
+           //<< j << "]" << endl;
+      int center = data[i][j];
+      vector<pair<int, int>> perimeter = manhattan_circle(i, j, 1);
+      //cout << "in PGMImage::set_ltps:\tgetting ltp at [" << i << ","
+           //<< j << "]" << endl;
+      for(int k = 0; k < num_neighbors; k++){
+        int x = perimeter[k].first;
+        int y = perimeter[k].second;
+        //cout << "in PGMImage::set_ltps:\tchecking neighbor " << k << 
+                //" = [" << x << "," << y << "] of width_ = " << 
+                //width_ << " and height_ = " << height_ << endl;
+        ltp[k] = compare_cells(center, data[x][y]);
+      }
+      //cout << "in PGMImage::set_ltps:\tdone." << endl;
+      ltps[i][j] = ltp_to_lbps(ltp);
+      //cout << "in PGMImage::set_ltps:\tsuper done." << endl;
+    }
+    //cout << "in PGMImage::set_ltps:\twalked a column" << endl;
+  }
+  //cout << "in PGMImage::set_ltps:\tDONE WITH PGMImage::set_ltps" << endl;
+}
+
 double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
   // Return the average of the distance between the upper and lower lbps
 
@@ -232,8 +251,8 @@ double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
   // but this will do for now
   const int fallthrough_max_radius = 200; // NOTE THAT CURRENTLY, this is
                                           // TOTALLY ARBITRARY -- todo
-  int upper_match_radius = -1;
-  int lower_match_radius = -1;
+  double upper_match_radius = -1;
+  double lower_match_radius = -1;
 
   // Set max_radius for search
   int max_x = max(width_ - 1 - x, x);
@@ -241,7 +260,8 @@ double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
   int max_radius = max(max_x, max_y);
 
   // Begin the search
-  for(int search_radius = 0; search_radius <= max_radius; i++){
+  //cout << "in PGMImage::ltp_match_distance:\tsearching..." << endl;
+  for(int search_radius = 0; search_radius <= max_radius; search_radius++){
     // This constitutes our search path
     auto search_list = manhattan_circle(x, y, search_radius);
 
@@ -249,8 +269,8 @@ double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
     for(auto i = search_list.begin(); i != search_list.end(); i++){
       const uint test_lbp_upper = ltp.first;
       const uint test_lbp_lower = ltp.second;
-      const int search_x = i->x;
-      const int search_y = i->y;
+      const int search_x = i->first;
+      const int search_y = i->second;
 
       // First, check bounds. There are no lbps associated with the outermost rows
       // of the images
@@ -263,15 +283,21 @@ double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
 
       // Now check for matches
       if(test_lbp_upper == lbp_upper){
+        double dist = sqrt(pow(search_x - x, 2) + pow(search_y - y, 2));
         if(upper_match_radius != -1){
-          double dist = sqrt(pow(search_x - x, 2) + pow(search_y - y, 2));
-          upper_match_radius = min(upper_match_radius, dist);
+          upper_match_radius = min((double)upper_match_radius, dist);
+        }
+        else{
+          upper_match_radius = dist;
         }
       }
       if(test_lbp_lower == lbp_lower){
+        double dist = sqrt(pow(search_x - x, 2) + pow(search_y - y, 2));
         if(lower_match_radius != -1){
-          double dist = sqrt(pow(search_x - x, 2) + pow(search_y - y, 2));
-          upper_match_radius = min(upper_match_radius, dist);
+          lower_match_radius = min((double)upper_match_radius, dist);
+        }
+        else{
+          lower_match_radius = dist;
         }
       }
     }
@@ -285,15 +311,16 @@ double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
     upper_match_radius = fallthrough_max_radius;
   if(lower_match_radius == -1)
     lower_match_radius = fallthrough_max_radius;
-  
-  return (upper_match_radius + lower_match_radius) / 2;
+  double ltp_match_radius = (upper_match_radius + lower_match_radius) / 2;
+  //cout << "ltp radius = " << ltp_match_radius << endl;
+  return ltp_match_radius;
 }
 
 double PGMImage::average_ltp_distance(PGMImage& other) const {
   double total_distance = 0;
   for(int i = 1; i < width_ - 1; i++)
     for(int j = 1; j < height_ - 1; j++)
-      total_distance += lbp_match_distance(i, j, other.ltps[i][j]);
+      total_distance += ltp_match_distance(i, j, other(i, j));
 
   return total_distance /= ((width_ - 2)*(height_ - 2));
 }
