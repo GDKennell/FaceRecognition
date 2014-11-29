@@ -1,4 +1,7 @@
+#include "LBPMap.h"
 #include "PGMImage.h"
+
+#include <deque>
 
 #define UNIFORM -1
 typedef unsigned int uint;
@@ -6,6 +9,21 @@ typedef unsigned int uint;
 using namespace std;
 
 int my_abs(int x) { return (x < 0) ? -x : x; }
+
+uint *all_uniform_codes() {
+  const int num_uniform_codes = 58;
+  static uint* the_codes = NULL;
+  if (the_codes)
+    return the_codes;
+  uint count = 0;
+  the_codes = new uint[num_uniform_codes];
+  for (uint i = 0; i < 0x100; ++i) {
+    if (is_uniform(i)) {
+      the_codes[count++] = i;
+    }
+  }
+  return the_codes;
+}
 
 PGMImage::PGMImage(const char* filename) {
   data = 0;
@@ -241,9 +259,32 @@ void PGMImage::set_ltps() {
     //cout << "in PGMImage::set_ltps:\twalked a column" << endl;
   }
   //cout << "in PGMImage::set_ltps:\tDONE WITH PGMImage::set_ltps" << endl;
+
+  // Precompute distances to all upper and lower ltp codes
+  calculate_ltp_match_distances();
 }
 
-double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
+void PGMImage::calculate_ltp_match_distances() {
+  uint *uniform_codes = all_uniform_codes();
+
+  cout<<"allocating space for ltp distances"<<endl;
+  for (int i = 0; i < NUM_UNIFORM_CODES + 1; ++i) {
+    ltp_distances[i] = new pair<double, double>*[width_];
+    cout<<"width_: "<<width_<<", height_: "<<height_<<endl;
+    for (int x = 0; x < width_; ++x) {
+      ltp_distances[i][x] = new pair<double, double> [height_];
+    }
+    cout<<"allocated. calculating ltp_match distances"<<endl;
+    for (int x = 0; x < width_; ++x) {
+      for (int y = 0; y < height_; ++y) {
+        cout<<"("<<x<<","<<y<<") of ("<<width_<<","<<height_<<")"<<endl;
+        ltp_distances[i][x][y] = calculate_ltp_match_distance(x,y, pair<uint, uint>(i, i));
+      }
+    }
+  }
+}
+
+pair<double, double> PGMImage::calculate_ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
   // Return the average of the distance between the upper and lower lbps
 
   // Using boxes of increasing size. Not quite optimal - should be 
@@ -278,8 +319,8 @@ double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
         continue;
       if(search_y <= 0 || search_y >= height_ -1)
         continue;
-      const uint lbp_upper = ltps[search_x][search_y].first;
-      const uint lbp_lower = ltps[search_x][search_y].second;
+      const uint lbp_upper = LBPMap::shared_map().lbp_encode(ltps[search_x][search_y].first);
+      const uint lbp_lower = LBPMap::shared_map().lbp_encode(ltps[search_x][search_y].second);
 
       // Now check for matches
       if(test_lbp_upper == lbp_upper){
@@ -311,9 +352,18 @@ double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
     upper_match_radius = fallthrough_max_radius;
   if(lower_match_radius == -1)
     lower_match_radius = fallthrough_max_radius;
-  double ltp_match_radius = (upper_match_radius + lower_match_radius) / 2;
-  //cout << "ltp radius = " << ltp_match_radius << endl;
-  return ltp_match_radius;
+
+  return pair<double, double>(lower_match_radius, upper_match_radius);
+}
+
+double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
+  uint lower_code = LBPMap::shared_map().lbp_encode(ltp.first);
+  uint upper_code = LBPMap::shared_map().lbp_encode(ltp.second);
+
+  double lower_distance = ltp_distances[lower_code][x][y].first;
+  double upper_distance = ltp_distances[upper_code][x][y].second;
+
+  return (lower_distance + upper_distance) / 2.0;
 }
 
 double PGMImage::average_ltp_distance(PGMImage& other) const {

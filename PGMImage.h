@@ -12,6 +12,17 @@
 typedef unsigned int uint;
 using namespace std;
 
+const int NUM_UNIFORM_CODES = 58;
+const int NUM_LTP_CODES = NUM_UNIFORM_CODES + 1;
+
+typedef std::pair<double, double>** ltp_distance_array;
+
+// returns a pointer to the beginning of an array of all uniform codes.
+uint *all_uniform_codes();
+
+// returns true if lbp is uniform (has 2 or less 0-1 transitions)
+bool is_uniform(uint lbp);
+
 class PGMImage {
   public:
     // Constructors
@@ -55,8 +66,14 @@ class PGMImage {
   private:
     // return the average of the lower and upper binary pattern distances
     // from point (x, y) in this image 
+    // Simply performs a lookup in the pre-computed distances in ltp_distances
     double ltp_match_distance(int x, int y, pair<uint, uint> ltp) const;
-    
+
+    // These do the precomputation of ltp_distances, to be looked up at run time
+    // by ltp_match_distance
+    void calculate_ltp_match_distances();
+    std::pair<double, double> calculate_ltp_match_distance(int x, int y, pair<uint, uint> ltp) const;
+
     // compute (and allocate if necessary) the ltps from the current data
     void set_ltps();
 
@@ -71,6 +88,8 @@ class PGMImage {
 
     // Two dimensional array of LTPs
     pair<uint, uint> ** ltps;
+
+    ltp_distance_array ltp_distances[NUM_LTP_CODES];
 };
 
 #endif

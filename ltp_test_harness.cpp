@@ -39,8 +39,10 @@ int main(int argc, char **argv) {
   cout << "loading images" << endl;
   face_image_lists.resize(face_image_filenames.size());
   for (int i = 0; i < face_image_filenames.size(); ++i) {
+    cout<<"\timage list "<<i<<"/"<<face_image_filenames.size()<<endl;
     face_image_lists[i].resize(face_image_filenames[i].size());
     for (int j = 0; j < face_image_filenames[i].size(); ++j) {
+      cout<<"\t  img #"<<j<<"/"<<face_image_filenames[i].size()<<endl;
       //cout << "loading image set: " << i << " filename: " << j << endl;
       //cout << "filename:\t" << face_image_filenames[i][j] << endl;
       face_image_lists[i][j].load(face_image_filenames[i][j]);
