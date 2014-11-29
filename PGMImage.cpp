@@ -3,7 +3,6 @@
 
 #include <deque>
 
-#define UNIFORM -1
 typedef unsigned int uint;
 
 using namespace std;
@@ -56,12 +55,13 @@ PGMImage::~PGMImage() {
 void PGMImage::load(const string filename) {
   ifstream img_fs;
   //cout << "in PGMImage::load:\topening filename..." << endl;
+
   img_fs.open(filename);
   //cout << "in PGMImage::load:\topened..." << endl;
 
   if (!img_fs) {
     cerr<<"Couldn't open image \""<<filename<<"\""<<endl;
-    return;
+    exit(1);
   }
   string first_ln, comment_ln;
   getline(img_fs, first_ln);
@@ -175,10 +175,10 @@ pair<uint, uint> ltp_to_lbps(int ltp[num_neighbors]){
       set_bit(lbp_upper, i, 0);
     }
   }
-  if(is_uniform(lbp_lower))
-    lbp_lower = UNIFORM;
-  if(is_uniform(lbp_upper))
-    lbp_upper = UNIFORM;
+  if(!is_uniform(lbp_lower))
+    lbp_lower = NON_UNIFORM_CODE;
+  if(!is_uniform(lbp_upper))
+    lbp_upper = NON_UNIFORM_CODE;
   pair<uint, uint> lbps(lbp_upper, lbp_lower);
   return lbps;
 }

@@ -7,6 +7,8 @@ typedef unsigned int uint;
 const uint LBPradius = 1;
 const uint perimeter = 8 * LBPradius;
 
+extern const uint NON_UNIFORM_CODE;
+
 uint rotate_bits(uint lbp, uint diameter);
 
 class LBPMap{

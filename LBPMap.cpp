@@ -14,13 +14,8 @@ LBPMap& LBPMap::shared_map() {
   return singleton_map;
 }
 
-uint LBPMap::lbp_encode(uint LBP){ 
-  try {
-    return lbp_code_table.at(LBP);
-  }
-  catch (const std::out_of_range& e) {
-    return lbp_code_table.at(NON_UNIFORM_CODE);
-  }
+uint LBPMap::lbp_encode(uint LBP){
+  return lbp_code_table.at(LBP);
 }
 
 uint LBPMap::lbp_encode(uint LBP[perimeter]){
