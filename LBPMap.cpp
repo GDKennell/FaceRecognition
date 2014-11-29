@@ -14,11 +14,11 @@ LBPMap& LBPMap::shared_map() {
   return singleton_map;
 }
 
-uint LBPMap::lbp_encode(uint LBP){
+uint LBPMap::lbp_encode(uint LBP) {
   return lbp_code_table.at(LBP);
 }
 
-uint LBPMap::lbp_encode(uint LBP[perimeter]){
+uint LBPMap::lbp_encode(uint LBP[perimeter]) {
   uint lbp_code = 0;
   for(int i = 0; i < perimeter; i++) {
     assert(LBP[i] == 0 || LBP[i] == 1);
@@ -32,6 +32,10 @@ uint LBPMap::lbp_encode(uint LBP[perimeter]){
   catch(const std::out_of_range& e){
     return lbp_code_table.at(NON_UNIFORM_CODE);
   }
+}
+
+uint LBPMap::lbp_decode(uint mapped_val) {
+  return lbp_code_table[mapped_val];
 }
 
 LBPMap::LBPMap() {
