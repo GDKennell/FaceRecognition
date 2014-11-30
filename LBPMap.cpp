@@ -35,7 +35,13 @@ uint LBPMap::lbp_encode(uint LBP[perimeter]) {
 }
 
 uint LBPMap::lbp_decode(uint mapped_val) {
-  return lbp_code_table[mapped_val];
+  for (auto it = lbp_code_table.begin(); it != lbp_code_table.end(); ++it) {
+    if (it->second == mapped_val)
+      return it->first;
+  }
+  cerr<<"LBPMap: Could not find which LBP code is mapped to "<<mapped_val<<endl;
+  exit(1);
+  return 0;
 }
 
 LBPMap::LBPMap() {
