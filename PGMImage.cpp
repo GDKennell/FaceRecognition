@@ -9,6 +9,8 @@ using namespace std;
 
 int my_abs(int x) { return (x < 0) ? -x : x; }
 
+const int fallthrough_max_radius = 200; // NOTE THAT CURRENTLY, this is
+                                        // TOTALLY ARBITRARY -- todo
 uint *all_uniform_codes() {
   const int num_uniform_codes = 58;
   static uint* the_codes = NULL;
@@ -287,36 +289,42 @@ int compare_cells(int center, int outer){
     return -1;
 }
 
-vector<pair<int, int>> manhattan_circle(int center_x, int center_y, int radius){
+vector<pair<int, int> >& manhattan_circle(int center_x, int center_y, int radius){
+  static vector<pair<int, int> >cached_circles[fallthrough_max_radius+1];
+  if (!cached_circles[radius].empty()) {
+    return cached_circles[radius];
+  }
+
   // This creates a vector of indices in the shape of a circle under the
   // Manhattan metric. EG:
-  // [-1,1]   [0,1]   [1,1]
-  // [-1,0]           [1,0]
-  // [-1,-1]  [0,-1]  [1,-1]
+  // [-1,-1]   [0,-1]  [1,-1]
+  // [-1, 0]           [1, 0]
+  // [-1, 1]   [0, 1]  [1, 1]
   // unrolls to 
-  // [[-1,1], [0,1], [1,1], [1,0], [1,-1], [0,-1], [-1,-1], [-1,0]]
+  // [[-1,-1], [0,-1], [1,-1], [1,0], [1,1], [0,1], [-1,1], [-1,0]]
   vector<pair<int, int>> perimeter;
   // Top row of the circle
-  for(int i = -radius; i <= radius; i++){
-    pair<int, int> square(center_x + i, center_y + radius);
+  for(int i = -radius; i <= radius; ++i){
+    pair<int, int> square(i, -radius);
     perimeter.push_back(square);
   }
   // Right descending column
-  for(int i = radius - 1; i >= -radius; i--){
-    pair<int, int> square(center_x + radius, center_y + i);
+  for(int i = -radius + 1; i <= radius; ++i){
+    pair<int, int> square(radius, i);
     perimeter.push_back(square);
   }
   // Bottom row backwards
-  for(int i = radius - 1; i >= -radius; i--){
-    pair<int, int> square(center_x + i, center_y - radius);
+  for(int i = radius - 1; i >= -radius; --i){
+    pair<int, int> square(i, radius);
     perimeter.push_back(square);
   }
   // Left ascending column
-  for(int i = -radius + 1; i <= radius - 1; i++){
-    pair<int, int> square(center_x - radius, center_y + i);
+  for(int i = radius - 1; i >= -radius + 1; --i){
+    pair<int, int> square(-radius, i);
     perimeter.push_back(square);
   }
-  return perimeter;
+  cached_circles[radius] = perimeter;
+  return cached_circles[radius];
 }
 
 // set or reset the lbps_upper and lbps_lower arrays
@@ -339,12 +347,12 @@ void PGMImage::set_ltps() {
       //cout << "in PGMImage::set_ltps:\tgetting ltp at [" << x << ","
            //<< y << "]" << endl;
       for(int k = 0; k < num_neighbors; k++){
-        int x = perimeter[k].first;
-        int y = perimeter[k].second;
+        int perimeter_x = x + perimeter[k].first;
+        int perimeter_y = y + perimeter[k].second;
         //cout << "in PGMImage::set_ltps:\tchecking neighbor " << k << 
                 //" = [" << x << "," << y << "] of width_ = " << 
                 //width_ << " and height_ = " << height_ << endl;
-        ltp[k] = compare_cells(center, data[x][y]);
+        ltp[k] = compare_cells(center, data[perimeter_x][perimeter_y]);
       }
       //cout << "in PGMImage::set_ltps:\tdone." << endl;
       ltps[x][y] = ltp_to_lbps(ltp);
@@ -389,8 +397,6 @@ pair<double, double> PGMImage::calculate_ltp_match_distance(int x, int y, pair<u
   // Using boxes of increasing size. Not quite optimal - should be 
   // a round search circle of given radius to minimzie euclidian distance
   // but this will do for now
-  const int fallthrough_max_radius = 200; // NOTE THAT CURRENTLY, this is
-                                          // TOTALLY ARBITRARY -- todo
   double upper_match_radius = -1;
   double lower_match_radius = -1;
 
@@ -409,8 +415,8 @@ pair<double, double> PGMImage::calculate_ltp_match_distance(int x, int y, pair<u
     for(auto i = search_list.begin(); i != search_list.end(); i++){
       const uint test_lbp_upper = ltp.first;
       const uint test_lbp_lower = ltp.second;
-      const int search_x = i->first;
-      const int search_y = i->second;
+      const int search_x = x + i->first;
+      const int search_y = y + i->second;
 
       // First, check bounds. There are no lbps associated with the outermost rows
       // of the images
