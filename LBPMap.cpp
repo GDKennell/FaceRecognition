@@ -14,34 +14,46 @@ LBPMap& LBPMap::shared_map() {
   return singleton_map;
 }
 
-uint LBPMap::lbp_encode(uint LBP){
-  return lbp_code_table.at(LBP);
+uint LBPMap::lbp_encode(uint LBP) {
+  return lbp_code_table[LBP];
 }
 
-uint LBPMap::lbp_encode(uint LBP[perimeter]){
+uint LBPMap::lbp_encode(uint LBP[perimeter]) {
   uint lbp_code = 0;
   for(int i = 0; i < perimeter; i++) {
     assert(LBP[i] == 0 || LBP[i] == 1);
     lbp_code |= LBP[i] << i;
   }
-  // UNIFORM
-  try{
-    return lbp_code_table.at(lbp_code);
+  return lbp_code_table[lbp_code];
+}
+
+uint LBPMap::lbp_decode(uint mapped_val) {
+  for (int i = 0; i < MAX_CODE + 1; ++i) {
+    if (lbp_code_table[i] == mapped_val)
+      return i;
   }
-  // NON-UNIFORM
-  catch(const std::out_of_range& e){
-    return lbp_code_table.at(NON_UNIFORM_CODE);
-  }
+  cerr<<"LBPMap: Could not find which LBP code is mapped to "<<mapped_val<<endl;
+  exit(1);
+  return 0;
 }
 
 LBPMap::LBPMap() {
+  // All uniform codes and signal value for non-uniform codes
+  // will be written over
+  for (int i = 0; i < MAX_CODE + 1; ++i) {
+    lbp_code_table[i] = -1;
+  }
+
   uint* uniform_codes = all_uniform_codes();
   int count;
 
   for (count = 0; count < NUM_UNIFORM_CODES; ++count) {
-    lbp_code_table.insert(pair<uint, uint>(uniform_codes[count], count));
+    lbp_code_table[uniform_codes[count]] = count;
   }
-  lbp_code_table.insert(pair<uint, uint>(NON_UNIFORM_CODE, count)); // NON-UNIFORM CODES
+  // This will only work if we keep my NON_UNIFORM_CODE
+  // as MAX_CODE + 1, or as some arbitrary non-uniform code
+  assert(NON_UNIFORM_CODE <= MAX_CODE + 1);
+  lbp_code_table[NON_UNIFORM_CODE] = count; // NON-UNIFORM CODES
 }
 
 // Rotate bits one step to the left, with a given diameter. EG

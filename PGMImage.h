@@ -33,8 +33,16 @@ class PGMImage {
     ~PGMImage();
     
     // File I/O 
-    void load(const string);
+    void load(const string& filename);
     void save(char* filename) const;
+
+    // Store all data to file including LBP arrays
+    // and precomputed LBP distances
+    void pickle(const string& filename) const;
+
+    // Load all data including LBP arrays and
+    // precomputed LBP distances from file
+    void cucumber(const string& filename);
 
     // Accessors
     pair<uint, uint> operator()(int x, int y) const
@@ -90,6 +98,15 @@ class PGMImage {
     pair<uint, uint> ** ltps;
 
     ltp_distance_array ltp_distances[NUM_LTP_CODES];
+
+    // File I/O private helpers
+    void write_ltp_data(ofstream& out_file) const;
+    void write_ltp_distance_data(ofstream& out_file) const;
+
+    void load_ltp_data(ifstream& data_file);
+    void load_ltp_distance_data(ifstream& data_file);
+
+    string filename_;
 };
 
 #endif
