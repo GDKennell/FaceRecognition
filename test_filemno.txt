@@ -1,0 +1,3 @@
+facem1.pgm facem2.pgm facem3.pgm facem4.pgm facem5.pgm facem6.pgm facem7.pgm facem8.pgm facem9.pgm facem10.pgm facem11.pgm facem12.pgm facem13.pgm facem14.pgm facem15.pgm 
+facen1.pgm facen2.pgm facen3.pgm facen4.pgm facen5.pgm facen6.pgm facen7.pgm facen8.pgm facen9.pgm facen10.pgm facen11.pgm facen12.pgm facen13.pgm facen14.pgm facen15.pgm 
+faceo1.pgm faceo2.pgm faceo3.pgm faceo4.pgm faceo5.pgm faceo6.pgm faceo7.pgm faceo8.pgm faceo9.pgm faceo10.pgm faceo11.pgm faceo12.pgm faceo13.pgm faceo14.pgm faceo15.pgm 

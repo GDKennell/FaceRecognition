@@ -289,8 +289,8 @@ int compare_cells(int center, int outer){
     return -1;
 }
 
-vector<pair<int, int> >& manhattan_circle(int center_x, int center_y, int radius){
-  static vector<pair<int, int> >cached_circles[fallthrough_max_radius+1];
+vector<pair<int, int> >& manhattan_circle(int radius){
+  static vector<pair<int, int> >cached_circles[2 * fallthrough_max_radius+1];
   if (!cached_circles[radius].empty()) {
     return cached_circles[radius];
   }
@@ -343,7 +343,7 @@ void PGMImage::set_ltps() {
       //cout << "in PGMImage::set_ltps:\taccessing data[" << x << "]["
            //<< y << "]" << endl;
       int center = data[x][y];
-      vector<pair<int, int>> perimeter = manhattan_circle(x, y, 1);
+      vector<pair<int, int>> perimeter = manhattan_circle(1);
       //cout << "in PGMImage::set_ltps:\tgetting ltp at [" << x << ","
            //<< y << "]" << endl;
       for(int k = 0; k < num_neighbors; k++){
@@ -372,7 +372,10 @@ void PGMImage::calculate_ltp_match_distances() {
   cout<<"Precomputing ltp_match distances for image #"<<count++<<endl;
   //cout<<"allocating space for ltp distances"<<endl;
   for (int i = 0; i < NUM_LTP_CODES; ++i) {
-    cout<<"Precomputing ltp_match distances for code #"<<i<<" of "<<NUM_UNIFORM_CODES + 1<<endl;
+    cout<<"Precomputing ltp_match distances for code #"<<i<<" of "<<NUM_UNIFORM_CODES + 1;
+    cout<<" ("<<LBPMap::shared_map().lbp_decode(i)<<')'<<endl;
+    double total_distance = 0.0;
+    int count = 0;
     ltp_distances[i] = new pair<double, double>*[width_];
     //cout<<"width_: "<<width_<<", height_: "<<height_<<endl;
     for (int x = 0; x < width_; ++x) {
@@ -381,14 +384,19 @@ void PGMImage::calculate_ltp_match_distances() {
     for (int x = 0; x < width_; ++x) {
 //      cout<<"row x="<<x<<" of "<<width_<<endl;
       for (int y = 0; y < height_; ++y) {
-        ltp_distances[i][x][y] = calculate_ltp_match_distance(x,y, pair<uint, uint>(i, i));
+        auto distances = calculate_ltp_match_distance(x,y, pair<uint, uint>(i, i));
+        ltp_distances[i][x][y] = distances;
+        total_distance += distances.first + distances.second;
+        count += 2;
       }
     }
+    cout<<"\tfinished, avg distance: "<<total_distance / ((double)count)<<endl<<endl;
   }
   string data_file_suffix = "_data.txt";
   string data_filename = filename_.substr(0, filename_.size() - 4);
   data_filename += data_file_suffix;
   pickle(data_filename);
+  exit(0);
 }
 
 pair<double, double> PGMImage::calculate_ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
@@ -409,7 +417,7 @@ pair<double, double> PGMImage::calculate_ltp_match_distance(int x, int y, pair<u
   //cout << "in PGMImage::ltp_match_distance:\tsearching..." << endl;
   for(int search_radius = 0; search_radius <= max_radius; search_radius++){
     // This constitutes our search path
-    auto search_list = manhattan_circle(x, y, search_radius);
+    auto search_list = manhattan_circle(search_radius);
 
     // Go along path of manhattan radius search_radius searching for the best match
     for(auto i = search_list.begin(); i != search_list.end(); i++){

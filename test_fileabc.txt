@@ -1,0 +1,3 @@
+facea2.pgm facea3.pgm facea4.pgm facea5.pgm facea6.pgm facea7.pgm facea8.pgm facea9.pgm facea10.pgm facea11.pgm facea12.pgm facea13.pgm facea14.pgm facea15.pgm 
+faceb1.pgm faceb2.pgm faceb3.pgm faceb4.pgm faceb5.pgm faceb6.pgm faceb7.pgm faceb8.pgm faceb9.pgm faceb10.pgm faceb11.pgm faceb12.pgm faceb13.pgm faceb14.pgm faceb15.pgm 
+facec1.pgm facec2.pgm facec3.pgm facec4.pgm facec5.pgm facec6.pgm facec7.pgm facec8.pgm facec9.pgm facec10.pgm facec11.pgm facec12.pgm facec13.pgm facec14.pgm facec15.pgm 
