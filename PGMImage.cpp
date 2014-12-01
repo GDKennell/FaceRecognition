@@ -226,6 +226,16 @@ void PGMImage::identity_preprocess(){
   set_ltps();
 }
 
+void PGMImage::gamma_correct(){
+  const uint gamma = .2;
+  for(int i = 0; i < width_; i++){
+    for(int j = 0; j < height_; j++){
+      double normalized = (double)data[i][j] / 255.0;
+      normalized = pow(normalized, gamma) * 255;
+      data[i][j] = (int)normalized;
+    }
+  }
+}
 
 // tolerance within which a pixel is considered as 0
 // rather than 1 for above or -1 for below
