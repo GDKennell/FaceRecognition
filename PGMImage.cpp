@@ -273,8 +273,8 @@ pair<uint, uint> ltp_to_lbps(int ltp[num_neighbors]){
       set_bit(lbp_upper, i, 0);
     }
     else if(ltp[i] == 1){
-      set_bit(lbp_upper, i, 1);
       set_bit(lbp_lower, i, 0);
+      set_bit(lbp_upper, i, 1);
     }
     else{
       set_bit(lbp_lower, i, 0);
@@ -300,10 +300,10 @@ int compare_cells(int center, int outer){
 }
 
 vector<pair<int, int> >& manhattan_circle(int center_x, int center_y, int radius){
-  static vector<pair<int, int> >cached_circles[fallthrough_max_radius+1];
+  /*static vector<pair<int, int> >cached_circles[fallthrough_max_radius+1];
   if (!cached_circles[radius].empty()) {
     return cached_circles[radius];
-  }
+  }*/
 
   // This creates a vector of indices in the shape of a circle under the
   // Manhattan metric. EG:
@@ -333,8 +333,9 @@ vector<pair<int, int> >& manhattan_circle(int center_x, int center_y, int radius
     pair<int, int> square(-radius, i);
     perimeter.push_back(square);
   }
-  cached_circles[radius] = perimeter;
-  return cached_circles[radius];
+  return perimeter;
+  //cached_circles[radius] = perimeter;
+  //return cached_circles[radius];
 }
 
 // set or reset the lbps_upper and lbps_lower arrays
@@ -350,28 +351,16 @@ void PGMImage::set_ltps() {
   int ltp[num_neighbors];
   for(int x = 1; x < width_- 1; x++){
     for(int y = 1; y < height_ - 1; y++){
-      //cout << "in PGMImage::set_ltps:\taccessing data[" << x << "]["
-           //<< y << "]" << endl;
       int center = data[x][y];
       vector<pair<int, int>> perimeter = manhattan_circle(x, y, 1);
-      //cout << "in PGMImage::set_ltps:\tgetting ltp at [" << x << ","
-           //<< y << "]" << endl;
       for(int k = 0; k < num_neighbors; k++){
         int perimeter_x = x + perimeter[k].first;
         int perimeter_y = y + perimeter[k].second;
-        //cout << "in PGMImage::set_ltps:\tchecking neighbor " << k << 
-                //" = [" << x << "," << y << "] of width_ = " << 
-                //width_ << " and height_ = " << height_ << endl;
         ltp[k] = compare_cells(center, data[perimeter_x][perimeter_y]);
       }
-      //cout << "in PGMImage::set_ltps:\tdone." << endl;
       ltps[x][y] = ltp_to_lbps(ltp);
-      //cout << "in PGMImage::set_ltps:\tsuper done." << endl;
     }
-    //cout << "in PGMImage::set_ltps:\twalked a column" << endl;
   }
-  //cout << "in PGMImage::set_ltps:\tDONE WITH PGMImage::set_ltps" << endl;
-
   // Precompute distances to all upper and lower ltp codes
   calculate_ltp_match_distances();
 }
@@ -380,16 +369,13 @@ void PGMImage::calculate_ltp_match_distances() {
   uint *uniform_codes = all_uniform_codes();
   static int count = 1;
   cout<<"Precomputing ltp_match distances for image #"<<count++<<endl;
-  //cout<<"allocating space for ltp distances"<<endl;
   for (int i = 0; i < NUM_LTP_CODES; ++i) {
     cout<<"Precomputing ltp_match distances for code #"<<i<<" of "<<NUM_UNIFORM_CODES + 1<<endl;
     ltp_distances[i] = new pair<double, double>*[width_];
-    //cout<<"width_: "<<width_<<", height_: "<<height_<<endl;
     for (int x = 0; x < width_; ++x) {
       ltp_distances[i][x] = new pair<double, double> [height_];
     }
     for (int x = 0; x < width_; ++x) {
-//      cout<<"row x="<<x<<" of "<<width_<<endl;
       for (int y = 0; y < height_; ++y) {
         ltp_distances[i][x][y] = calculate_ltp_match_distance(x,y, pair<uint, uint>(i, i));
       }
