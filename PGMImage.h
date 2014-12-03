@@ -43,6 +43,7 @@ class PGMImage {
     // Load all data including LBP arrays and
     // precomputed LBP distances from file
     void cucumber(const string& filename);
+    void cucumber(ifstream& in_file);
 
     // Accessors
     pair<uint, uint> operator()(int x, int y) const

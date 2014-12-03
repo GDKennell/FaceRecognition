@@ -132,10 +132,13 @@ void PGMImage::cucumber(const string& filename) {
     cerr<<"Failed to open input file \""<<filename<<"\""<<endl;
     exit(1);
   }
+  cucumber(data_file);
+  data_file.close();
+}
+void PGMImage::cucumber(ifstream& data_file) {
   data_file >> width_ >> height_;
   load_ltp_data(data_file);
   load_ltp_distance_data(data_file);
-  data_file.close();
 }
 
 void PGMImage::write_ltp_data(ofstream& out_file) const {
@@ -366,7 +369,24 @@ void PGMImage::set_ltps() {
   calculate_ltp_match_distances();
 }
 
+string pickle_data_filename(const string& filename) {
+  string data_file_suffix = "_data.txt";
+  string data_filename = filename.substr(0, filename.size() - 4);
+  data_filename += data_file_suffix;
+  return data_filename;
+}
+
 void PGMImage::calculate_ltp_match_distances() {
+  ifstream pickle_data_file;
+  pickle_data_file.open(pickle_data_filename(filename_));
+  if (pickle_data_file) {
+    cout<<"Found pickle data file \""<<pickle_data_filename(filename_)<<"\". Loading from it"<<endl;
+    cucumber(pickle_data_file);
+    pickle_data_file.close();
+    return;
+  }
+  cout<<"No pickle data file found for image \""<<filename_<<"\". calcluating data"<<endl;
+    
   uint *uniform_codes = all_uniform_codes();
   static int count = 1;
   cout<<"Precomputing ltp_match distances for image #"<<count++<<endl;
@@ -392,11 +412,7 @@ void PGMImage::calculate_ltp_match_distances() {
     }
     cout<<"\tfinished, avg distance: "<<total_distance / ((double)count)<<endl<<endl;
   }
-  string data_file_suffix = "_data.txt";
-  string data_filename = filename_.substr(0, filename_.size() - 4);
-  data_filename += data_file_suffix;
-  pickle(data_filename);
-  exit(0);
+  pickle(pickle_data_filename(filename_));
 }
 
 pair<double, double> PGMImage::calculate_ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
