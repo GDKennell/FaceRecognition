@@ -28,7 +28,7 @@ uint LBPMap::lbp_encode(uint LBP[perimeter]) {
 }
 
 uint LBPMap::lbp_decode(uint mapped_val) {
-  for (int i = 0; i < MAX_CODE + 1; ++i) {
+  for (int i = 0; i <= MAX_CODE + 1; ++i) {
     if (lbp_code_table[i] == mapped_val)
       return i;
   }
