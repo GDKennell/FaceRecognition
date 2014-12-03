@@ -9,7 +9,7 @@ using namespace std;
 
 int my_abs(int x) { return (x < 0) ? -x : x; }
 
-const int fallthrough_max_radius = 200; // NOTE THAT CURRENTLY, this is
+const int fallthrough_max_radius = 6; // NOTE THAT CURRENTLY, this is
                                         // TOTALLY ARBITRARY -- todo
 uint *all_uniform_codes() {
   const int num_uniform_codes = 58;
@@ -411,7 +411,7 @@ pair<double, double> PGMImage::calculate_ltp_match_distance(int x, int y, pair<u
   // Set max_radius for search
   int max_x = max(width_ - 1 - x, x);
   int max_y = max(height_ - 1 - y, y);
-  int max_radius = max(max_x, max_y);
+  int max_radius = 6;
 
   // Begin the search
   //cout << "in PGMImage::ltp_match_distance:\tsearching..." << endl;
