@@ -9,45 +9,24 @@
 #include <string.h>
 #include <utility>
 #include <string>
-typedef unsigned int uint;
 using namespace std;
 
+typedef unsigned int uint;
 const int NUM_UNIFORM_CODES = 58;
 const int NUM_LTP_CODES = NUM_UNIFORM_CODES + 1;
 
-typedef std::pair<double, double>** ltp_distance_array;
-
-// returns a pointer to the beginning of an array of all uniform codes.
-uint *all_uniform_codes();
-
-// returns true if lbp is uniform (has 2 or less 0-1 transitions)
-bool is_uniform(uint lbp);
-
+typedef vector<vector<double>> lbp_distance_map;
 class PGMImage {
   public:
     // Constructors
-    PGMImage() : width_(0), height_(0), data(NULL), ltps(NULL) { }
+    PGMImage() : width_(0), height_(0) { }
     PGMImage(const char* filename);
-    PGMImage(const PGMImage& rhs);
-
-    ~PGMImage();
     
     // File I/O 
     void load(const string& filename);
-    void save(char* filename) const;
-
-    // Store all data to file including LBP arrays
-    // and precomputed LBP distances
-    void pickle(const string& filename) const;
-
-    // Load all data including LBP arrays and
-    // precomputed LBP distances from file
-    void cucumber(const string& filename);
+    void save(char* filename);
 
     // Accessors
-    pair<uint, uint> operator()(int x, int y) const
-    { assert(*this); return ltps[x][y]; }
-
     int width() const
     { return width_; }
 
@@ -69,7 +48,12 @@ class PGMImage {
     double average_ltp_distance(PGMImage& other) const;
     
     // Preprocessing routines. Each sets the ltps after completion
+    void preprocess();
     void identity_preprocess(); // Do nothing 
+    void gamma_correct();
+
+    // Ready for use
+    void calculate_ltp_distance_maps();
 
   private:
     // return the average of the lower and upper binary pattern distances
@@ -86,28 +70,20 @@ class PGMImage {
     void set_ltps();
 
     // Both set to 0 if invalid
-    int width_, height_;
-
-    // Max level of grey. Typically 255
-    int grey_lvl_;
+    int width_, height_, grey_lvl_;
 
     // Two dimensional array of width x height
-    unsigned int **data;
+    vector<vector<uint>> image_data;
 
-    // Two dimensional array of LTPs
-    pair<uint, uint> ** ltps;
+    // LBPS themselves
+    vector<vector<uint>> upper_lbps;
+    vector<vector<uint>> lower_lbps;
 
-    ltp_distance_array ltp_distances[NUM_LTP_CODES];
-
-    // File I/O private helpers
-    void write_ltp_data(ofstream& out_file) const;
-    void write_ltp_distance_data(ofstream& out_file) const;
-
-    void load_ltp_data(ifstream& data_file);
-    void load_ltp_distance_data(ifstream& data_file);
-
-    string filename_;
+    // Array of LBP distance transforms, indexed via the LBP_DICTIONARY
+    vector<lbp_distance_map> upper_lbp_distance_transforms;
+    vector<lbp_distance_map> lower_lbp_distance_transforms;
 };
+
 
 #endif
 
