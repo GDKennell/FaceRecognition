@@ -165,6 +165,7 @@ void PGMImage::load_ltp_data(ifstream& data_file) {
   //First line will be comment "#LTP data"
   string comment_line;
   getline(data_file, comment_line);
+  getline(data_file, comment_line);
 
   if(!ltps) {
     //cout << "in PGMImage::set_ltps:\tallocating arrays" << endl;
@@ -189,6 +190,7 @@ void PGMImage::load_ltp_distance_data(ifstream& data_file) {
   for (int i = 0; i < NUM_LTP_CODES; ++i) {
     //Comment line before each line of form
     //#Code i (<lbp_code>)
+    getline(data_file, comment_line);
     getline(data_file, comment_line);
     ltp_distances[i] = new pair<double, double>*[width_];
     for (int x = 0; x < width_; ++x) {
@@ -339,7 +341,6 @@ void PGMImage::set_ltps() {
       ltps[i] = new pair<uint, uint> [height_];
     }
   }
-  cout << "in PGMImage::set_ltps:\tarrays allocated" << endl;
   int ltp[num_neighbors];
   for(int x = 1; x < width_- 1; x++){
     for(int y = 1; y < height_ - 1; y++){
@@ -371,8 +372,9 @@ void PGMImage::set_ltps() {
 
 string pickle_data_filename(const string& filename) {
   string data_file_suffix = "_data.txt";
-  string data_filename = filename.substr(0, filename.size() - 4);
+  string data_filename = filename.substr(7, filename.size() - (4 + 7));
   data_filename += data_file_suffix;
+  data_filename = "images_pickled/" + data_filename;
   return data_filename;
 }
 
@@ -385,7 +387,7 @@ void PGMImage::calculate_ltp_match_distances() {
     pickle_data_file.close();
     return;
   }
-  cout<<"No pickle data file found for image \""<<filename_<<"\". calcluating data"<<endl;
+  cout<<"No pickle data file found for image \""<<filename_<<"\" ("<<pickle_data_filename(filename_)<<"). calcluating data"<<endl;
     
   uint *uniform_codes = all_uniform_codes();
   static int count = 1;
