@@ -29,6 +29,7 @@ class PGMImage {
     PGMImage() : width_(0), height_(0), data(NULL), ltps(NULL) { }
     PGMImage(const char* filename);
     PGMImage(const PGMImage& rhs);
+    PGMImage(int size_x, int size_y, vector<pair<int, int>> white_pixels);
 
     ~PGMImage();
     

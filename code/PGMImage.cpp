@@ -37,6 +37,22 @@ PGMImage::PGMImage(const char* filename) {
   load(filename);
 }
 
+PGMImage::PGMImage(int size_x, int size_y, vector<pair<int, int>> white_pixels){
+  width_ = size_x;
+  height_ = size_y;
+  grey_lvl_ = 255;
+  data = new uint*[width_];
+  for (int x = 0; x < width_; ++x)
+    data[x] = new uint[height_];
+
+  for (int x = 0; x < width_; ++x)
+    for (int y = 0; y < height_; ++y)
+      data[x][y] = 255;
+
+  for(auto it = white_pixels.begin(); it != white_pixels.end(); it++)
+    data[it->first][it->second] = 0;
+}
+
 PGMImage::PGMImage(const PGMImage& rhs) {
   data = new uint*[rhs.width_];
   for (int x = 0; x < rhs.width_; ++x) {
@@ -555,20 +571,73 @@ double ** gaussianFilter(uint ** image, uint height, uint width, double sigma){
   for(int i = 0; i < width; i++)
     newImage[i] = new double[height];
 	// creates gaussian window
-  int filterRadius = roundOdd(3*sigma); // capture 95% of the variation
+  int filterRadius = ceil(3*sigma); // capture 95% of the variation
+  cout << filterRadius << endl;
   vector<vector<double> > window = gaussWindow(sigma, filterRadius);
+  cout << window.size() << "x" << window[0].size() << endl;
 
 	// loop over every pixel in the image, add the convolution of the window and the
 	// image to the newImage array.
-  for(uint i = 0; i < width; i++){
-    for(uint j = 0; j < height; j++){
-    	newImage[i][j] = 0;
-      for(int k = -filterRadius; k <= filterRadius; k++){
-        for(int l = -filterRadius; l <= filterRadius; l++){
-					int filterX = k + filterRadius;
-					int filterY = l + filterRadius;
-          int indexX = i + k;
-          int indexY = j + l;
+  /*for(uint c_x = 0; c_x < width; c_x++){
+    for(uint c_y = 0; c_y < height; c_y++){
+    	newImage[c_x][c_y] = 0;
+      for(int off_x = -filterRadius; off_x <= filterRadius; off_x++){
+        for(int off_y = -filterRadius; off_y <= filterRadius; off_y++){
+					int filt_x = off_x + filterRadius;
+					int filt_y = off_y + filterRadius;
+          int img_x = c_x + off_x;
+          int img_y = c_y + off_y;
+					// Do mirroring
+          //if(indexY < 0) // reflect across 0 Y axis
+          //  indexY = -indexY;
+          //else if(indexY > height - 1) // reflect across height - 1 Y axis
+          //  indexY = (height - 1) - (indexY - (height - 1));
+          //if(indexX < 0) // reflect across 0 X axis
+          //  indexX = -indexX;
+          //else if(indexX > width - 1) // reflect across height - 1 X axis
+          //  indexX = (width - 1) - (indexX - (width - 1));
+					if(img_x < 0)
+						img_x = 0;
+					else if(img_x > width - 1)
+						img_x = width - 1;
+					if(img_y < 0)
+						img_y = 0;
+					else if(img_y > height - 1)
+						img_y = height - 1;
+          newImage[c_x][c_y] += window[filt_x][filt_y]*image[img_x][img_y];
+        }
+      }
+    }
+  }*/
+	// loop over every pixel in the image, add the convolution of the window and the
+	// image to the newImage array.
+  /*for(int i = 0; i < 2*filterRadius + 1; i++){
+    for(int j = 0; j < 2*filterRadius + 1; j++){
+      window[i][j] = 0;
+      if((i >= filterRadius - 1 && i <= filterRadius + 1)
+      && (j >= filterRadius - 1 && j <= filterRadius + 1))
+        window[i][j] = .1;
+      if(i == filterRadius && j == filterRadius)
+        window[i][j] = .2;
+    }
+  }
+  window[0][0] = 1;*/
+  // c_ = center pixel
+  for(int c_x = 0; c_x < width; c_x++)
+    for(int c_y = 0; c_y < height; c_y++)
+    	newImage[c_x][c_y] = 0;
+
+  for(int c_x = 0; c_x < width; c_x++){
+    for(int c_y = 0; c_y < height; c_y++){
+      // off_ = offset
+      for(int off_x = -filterRadius; off_x <= filterRadius; off_x++){
+        for(int off_y = -filterRadius; off_y <= filterRadius; off_y++){
+          // filt_ = filter
+					int filt_x = off_x + filterRadius;
+					int filt_y = off_y + filterRadius;
+          // img = image
+          int img_x = c_x + off_x;
+          int img_y = c_y + off_y;
 					/*// Do mirroring
           if(indexY < 0) // reflect across 0 Y axis
             indexY = -indexY;
@@ -578,15 +647,19 @@ double ** gaussianFilter(uint ** image, uint height, uint width, double sigma){
             indexX = -indexX;
           else if(indexX > width - 1) // reflect across height - 1 X axis
             indexX = (width - 1) - (indexX - (width - 1));*/
-					if(indexY < 0)
-						indexY = 0;
-					else if(indexY > height - 1)
-						indexY = height - 1;
-					if(indexX < 0)
-						indexX = 0;
-					else if(indexX > width - 1)
-						indexX = width - 1;
-          newImage[i][j] += window[filterX][filterY]*image[indexX][indexY];
+					if(img_x < 0)
+						//img_x = 0;
+            continue;
+					else if(img_x > width - 1)
+						//img_x = width - 1;
+            continue;
+					if(img_y < 0)
+						//img_y = 0;
+            continue;
+					else if(img_y > height - 1)
+						//img_y = height - 1;
+            continue;
+          newImage[img_x][img_y] += window[filt_x][filt_y]*image[c_x][c_y];
         }
       }
     }
@@ -596,9 +669,10 @@ double ** gaussianFilter(uint ** image, uint height, uint width, double sigma){
 
 int roundOdd(double x){
   x = round(x);
-  while(!x % 2)
-    x++;
-  return uint(x);
+  int y = (int)x;
+  while(!(y % 2))
+    y++;
+  return y;
 }
 
 vector<vector<double> > gaussWindow(double sigma, int filterRadius){
