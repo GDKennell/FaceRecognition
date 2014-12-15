@@ -1,12 +1,16 @@
 #include "LBPMap.h"
 #include "PGMImage.h"
-
+#include <cstdlib>
 #include <deque>
 
 typedef unsigned int uint;
 
 using namespace std;
 
+vector<vector<double> > gaussWindow(double sigma, int filterRadius);
+double ** gaussianFilter(uint ** image, uint height, uint width, double sigma);
+uint ** DoG(uint ** image, uint height, uint width, double sigma1, double sigma2);
+int roundOdd(double x);
 int my_abs(int x) { return (x < 0) ? -x : x; }
 
 const int fallthrough_max_radius = 6; // NOTE THAT CURRENTLY, this is
@@ -60,7 +64,7 @@ void PGMImage::load(const string& filename) {
   ifstream img_fs;
   //cout << "in PGMImage::load:\topening filename..." << endl;
 
-  img_fs.open(filename);
+  img_fs.open(filename.c_str());
   //cout << "in PGMImage::load:\topened..." << endl;
 
   if (!img_fs) {
@@ -79,8 +83,8 @@ void PGMImage::load(const string& filename) {
 
   //cout << "in PGMImage::load:\tdata arrays allocated" << endl;
   
-  for (int y = 0; y < height_; ++y) {
-    for (int x = 0; x < width_; ++x) {
+  for (int x = 0; x < width_; ++x) {
+    for (int y = 0; y < height_; ++y) {
       char ch;
       img_fs.read(&ch, 1);
       data[x][y] = 0;
@@ -99,7 +103,8 @@ void PGMImage::save(char* filename) const {
     exit(1);
   }
 
-  new_image << "P5\n#Image saved initially as "<<filename<<".\n"<<width_<<' '<<height_<<endl<<grey_lvl_<<endl;
+  new_image << "P5\n#Image saved initially as "<<filename<<".\n"
+						<<width_<<' '<<height_<<endl<<grey_lvl_<<endl;
   
   for (int x = 0; x < width_; ++x) {
     for (int y = 0; y < height_; ++y) {
@@ -112,7 +117,7 @@ void PGMImage::save(char* filename) const {
 void PGMImage::pickle(const string& filename) const {
   assert(data && ltps && ltp_distances[0]);
   ofstream data_file;
-  data_file.open(filename);
+  data_file.open(filename.c_str());
   if (!data_file) {
     cerr<<"Failed to open output file \""<<filename<<"\""<<endl;
     exit(1);
@@ -228,7 +233,19 @@ void PGMImage::clear() {
 void PGMImage::identity_preprocess(){
   set_ltps();
 }
-
+void PGMImage::DoG(double sigma1, double sigma2){
+	uint ** ptr_copy = data;
+	data = ::DoG(data, height(), width(), sigma1, sigma2);
+	for(int i = 0; i < width(); i++)
+		delete[] ptr_copy[i];
+	delete[] ptr_copy;
+}
+void PGMImage::gaussian(double sigma){
+	double ** gauss = gaussianFilter(data, height(), width(), sigma);
+	for(int i = 0; i < width(); i++)
+		for(int j = 0; j < height(); j++)
+			data[i][j] = (uint)(round(gauss[i][j]));
+}
 
 // tolerance within which a pixel is considered as 0
 // rather than 1 for above or -1 for below
@@ -503,3 +520,147 @@ double PGMImage::average_ltp_distance(PGMImage& other) const {
 
   return total_distance /= ((width_ - 2)*(height_ - 2));
 }
+
+
+uint ** DoG(uint ** image, uint height, uint width, double sigma1, double sigma2){
+  uint ** newImage = new uint *[width];
+  for(int i = 0; i < width; i++)
+    newImage[i] = new uint[height];
+  double ** img1 = gaussianFilter(image, height, width, sigma1);
+  double ** img2 = gaussianFilter(image, height, width, sigma2);
+  double maxVal = 0;
+  for(int i = 0; i < width; i++){
+    for(int j = 0; j < height; j++){
+      img1[i][j] = abs(img1[i][j] - img2[i][j]);
+      maxVal = max(maxVal, img1[i][j]);
+    }
+  }
+  for(int i = 0; i < width; i++){
+    for(int j = 0; j < height; j++){
+      newImage[i][j] = (uint)(img1[i][j] * (255.0/maxVal));
+    }
+  }
+  for(int i = 0; i < width; i++){
+    delete[] img1[i];
+    delete[] img2[i];
+  }
+  delete[] img1;
+  delete[] img2;
+  return newImage;
+}
+
+double ** gaussianFilter(uint ** image, uint height, uint width, double sigma){
+	// create 2d array to store result
+  double ** newImage = new double *[width];
+  for(int i = 0; i < width; i++)
+    newImage[i] = new double[height];
+	// creates gaussian window
+  int filterRadius = roundOdd(3*sigma); // capture 95% of the variation
+  vector<vector<double> > window = gaussWindow(sigma, filterRadius);
+
+	// loop over every pixel in the image, add the convolution of the window and the
+	// image to the newImage array.
+  for(uint i = 0; i < width; i++){
+    for(uint j = 0; j < height; j++){
+    	newImage[i][j] = 0;
+      for(int k = -filterRadius; k <= filterRadius; k++){
+        for(int l = -filterRadius; l <= filterRadius; l++){
+					int filterX = k + filterRadius;
+					int filterY = l + filterRadius;
+          int indexX = i + k;
+          int indexY = j + l;
+					/*// Do mirroring
+          if(indexY < 0) // reflect across 0 Y axis
+            indexY = -indexY;
+          else if(indexY > height - 1) // reflect across height - 1 Y axis
+            indexY = (height - 1) - (indexY - (height - 1));
+          if(indexX < 0) // reflect across 0 X axis
+            indexX = -indexX;
+          else if(indexX > width - 1) // reflect across height - 1 X axis
+            indexX = (width - 1) - (indexX - (width - 1));*/
+					if(indexY < 0)
+						indexY = 0;
+					else if(indexY > height - 1)
+						indexY = height - 1;
+					if(indexX < 0)
+						indexX = 0;
+					else if(indexX > width - 1)
+						indexX = width - 1;
+          newImage[i][j] += window[filterX][filterY]*image[indexX][indexY];
+        }
+      }
+    }
+  }
+  return newImage;
+}
+
+int roundOdd(double x){
+  x = round(x);
+  while(!x % 2)
+    x++;
+  return uint(x);
+}
+
+vector<vector<double> > gaussWindow(double sigma, int filterRadius){
+  vector<vector<double> > gaussXWindow(2*filterRadius + 1);
+  vector<vector<double> > gaussYWindow(2*filterRadius + 1);
+  vector<vector<double> > gaussXYWindow(2*filterRadius + 1);
+  for(int i = -filterRadius; i <= filterRadius; i++){
+    int y = i + filterRadius;
+    gaussXWindow[y].resize(2*filterRadius + 1);
+    gaussYWindow[y].resize(2*filterRadius + 1);
+    gaussXYWindow[y].resize(2*filterRadius + 1);
+  }
+  for(int i = -filterRadius; i <= filterRadius; i++){
+    for(int j = -filterRadius; j <= filterRadius; j++){
+      int y = i + filterRadius, x = j + filterRadius;
+      gaussXWindow[x][y] = i;
+      gaussYWindow[y][x] = i;
+    }
+  }
+	/*cout << "gaussWindowX(" << sigma << "):\n";
+	for(auto itX = gaussXWindow.begin(); itX != gaussXWindow.end(); itX++){
+		for(auto itY = itX->begin(); itY != itX->end(); itY++){
+			cout << *itY << "\t";
+		}
+		cout << endl;
+	}
+	cout << "gaussWindowY(" << sigma << "):\n";
+	for(auto itX = gaussYWindow.begin(); itX != gaussYWindow.end(); itX++){
+		for(auto itY = itX->begin(); itY != itX->end(); itY++){
+			cout << *itY << "\t";
+		}
+		cout << endl;
+	}*/
+  double gaussSum = 0;
+  for(int i = -filterRadius; i <= filterRadius; i++){
+    for(int j = -filterRadius; j <= filterRadius; j++){
+      int y = i + filterRadius, x = j + filterRadius;
+      gaussXYWindow[y][x] = exp(-pow(gaussXWindow[y][x],2)/(2*pow(sigma,2)) -
+                                pow(gaussYWindow[y][x],2)/(2*pow(sigma,2)));
+      gaussSum += gaussXYWindow[y][x];
+    }
+  }
+	/*cout << "gaussWindowXY(" << sigma << ") un-normalized:\n";
+	for(auto itX = gaussXYWindow.begin(); itX != gaussXYWindow.end(); itX++){
+		for(auto itY = itX->begin(); itY != itX->end(); itY++){
+			cout << *itY << "\t";
+		}
+		cout << endl;
+	}*/
+  for(int i = -filterRadius; i <= filterRadius; i++){
+    for(int j = -filterRadius; j <= filterRadius; j++){
+      int y = i + filterRadius, x = j + filterRadius;
+      gaussXYWindow[y][x] /= gaussSum;
+    }
+  }
+	/*cout << "gaussWindow(" << sigma << ") normalized:\n";
+	for(auto itX = gaussXYWindow.begin(); itX != gaussXYWindow.end(); itX++){
+		for(auto itY = itX->begin(); itY != itX->end(); itY++){
+			cout << *itY << "\t";
+		}
+		cout << endl;
+	}*/
+  return gaussXYWindow;
+}
+

@@ -71,6 +71,8 @@ class PGMImage {
     
     // Preprocessing routines. Each sets the ltps after completion
     void identity_preprocess(); // Do nothing 
+		void DoG(double sigma1, double sigma2);
+		void gaussian(double sigma);
 
   private:
     // return the average of the lower and upper binary pattern distances
