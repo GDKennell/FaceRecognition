@@ -16,6 +16,7 @@ const int NUM_UNIFORM_CODES = 58;
 const int NUM_LTP_CODES = NUM_UNIFORM_CODES + 1;
 
 typedef std::pair<double, double>** ltp_distance_array;
+enum edge_behavior_t {MIRROR, EDGE_ACCUMULATE, NONE}; 
 
 // returns a pointer to the beginning of an array of all uniform codes.
 uint *all_uniform_codes();
@@ -72,8 +73,9 @@ class PGMImage {
     
     // Preprocessing routines. Each sets the ltps after completion
     void identity_preprocess(); // Do nothing 
-		void DoG(double sigma1, double sigma2);
-		void gaussian(double sigma);
+		void DoG(double sigma1, double sigma2, edge_behavior_t edge_behavior);
+		void gaussian(double sigma, edge_behavior_t edge_behavior);
+    void gamma_correct(double gamma);
 
   private:
     // return the average of the lower and upper binary pattern distances
