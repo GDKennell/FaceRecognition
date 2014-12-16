@@ -99,8 +99,8 @@ void PGMImage::load(const string& filename) {
 
   //cout << "in PGMImage::load:\tdata arrays allocated" << endl;
   
-  for (int x = 0; x < width_; ++x) {
-    for (int y = 0; y < height_; ++y) {
+  for (int y = 0; y < height_; ++y) {
+    for (int x = 0; x < width_; ++x) {
       char ch;
       img_fs.read(&ch, 1);
       data[x][y] = 0;
@@ -122,8 +122,8 @@ void PGMImage::save(char* filename) const {
   new_image << "P5\n#Image saved initially as "<<filename<<".\n"
 						<<width_<<' '<<height_<<endl<<grey_lvl_<<endl;
   
-  for (int x = 0; x < width_; ++x) {
-    for (int y = 0; y < height_; ++y) {
+  for (int y = 0; y < height_; ++y) {
+    for (int x = 0; x < width_; ++x) {
       new_image.write((const char*)&data[x][y], 1);
     }
   }
