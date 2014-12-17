@@ -97,6 +97,7 @@ void PGMImage::load(const string& filename) {
   }
   string first_ln, comment_ln;
   getline(img_fs, first_ln);
+  getline(img_fs, first_ln);
 
   img_fs >> width_ >> height_ >> grey_lvl_;
   clear();
@@ -119,7 +120,7 @@ void PGMImage::load(const string& filename) {
   //cout << "in PGMImage::load:\tdone. Returning..." << endl;
 }
 
-void PGMImage::save(char* filename) const {
+void PGMImage::save(const char* filename) const {
   ofstream new_image;
   new_image.open(filename);
   if (!new_image) {
@@ -255,10 +256,9 @@ void PGMImage::clear() {
 // Preprocessing routines
 
 void PGMImage::identity_preprocess(){
-  gamma_correct(.2);
-  DoG(1,2, NONE);
-  contrast_equalize();
+  //DoG(1,2, NONE);
   set_ltps();
+  //save(filename_.c_str());
 }
 void PGMImage::DoG(double sigma1, double sigma2, edge_behavior_t edge_behavior){
 	uint ** ptr_copy = data;
@@ -433,7 +433,7 @@ void PGMImage::set_ltps() {
       ltps[i] = new pair<uint, uint> [height_];
     }
   }
-  cout << "in PGMImage::set_ltps:\tarrays allocated" << endl;
+  //cout << "in PGMImage::set_ltps:\tarrays allocated" << endl;
   int ltp[num_neighbors];
   for(int x = 1; x < width_- 1; x++){
     for(int y = 1; y < height_ - 1; y++){
@@ -639,9 +639,9 @@ double ** gaussianFilter(uint ** image,
     newImage[i] = new double[height];
 	// creates gaussian window
   int filterRadius = ceil(3*sigma); // capture 95% of the variation
-  cout << filterRadius << endl;
+  //cout << filterRadius << endl;
   vector<vector<double> > window = gaussWindow(sigma, filterRadius);
-  cout << window.size() << "x" << window[0].size() << endl;
+  //cout << window.size() << "x" << window[0].size() << endl;
 
   for(int c_x = 0; c_x < width; c_x++)
     for(int c_y = 0; c_y < height; c_y++)
