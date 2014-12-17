@@ -497,7 +497,7 @@ double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
   return (lower_distance + upper_distance) / 2.0;
 }
 
-double PGMImage::average_ltp_distance(PGMImage& other) const {
+double PGMImage::average_ltp_distance(const PGMImage& other) const {
   double total_distance = 0;
   for(int i = 1; i < width_ - 1; i++)
     for(int j = 1; j < height_ - 1; j++)
