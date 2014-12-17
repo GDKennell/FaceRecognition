@@ -89,6 +89,65 @@ int main(int argc, char **argv) {
     }
     cout << endl;
   }
+
+  int num_abs_correct = 0;
+  int num_avg_correct = 0;
+  int num_faces = 0;
+  for (int i = 0; i < face_image_lists.size(); ++i) {
+    for (int j = 0; j < face_image_lists[i].size(); ++j) {
+      ++num_faces;
+      const PGMImage& current_face = face_image_lists[i][j];
+
+      // Compare with other images of same face
+      // Find closest single image and average distance
+      double total_same_face_dist = 0.0;
+      double min_same_face_dist = 100000.0;
+      for (int k = 0; k < face_image_lists[i].size(); ++k) {
+        if (k == j)
+          continue;
+        const PGMImage& comp_face = face_image_lists[i][k];
+        double distance = (comp_face.average_ltp_distance(current_face) + current_face.average_ltp_distance(comp_face)) / 2.0;
+        if (distance < min_same_face_dist)
+          min_same_face_dist = distance;
+
+        total_same_face_dist += distance;
+      }
+      double avg_same_face_dist = total_same_face_dist / (double)(face_image_lists[i].size() - 1);
+
+      int assigned_abs_face = i, assigned_avg_face = i;
+
+      for (int k = 0; k < face_image_lists.size(); ++k) {
+        //Don't compare to same face (already did that)
+        if (k == i)
+          continue;
+        double total_distance = 0.0;
+        for (int l = 0; l < face_image_lists[k].size(); ++l) {
+          const PGMImage& comp_face = face_image_lists[k][l];
+          double distance = (comp_face.average_ltp_distance(current_face) + current_face.average_ltp_distance(comp_face)) / 2.0;
+          total_distance += distance;
+          if (distance < min_same_face_dist) {
+            assigned_abs_face = k;
+          }
+        }
+        double avg_distance = total_distance / (double)(face_image_lists[k].size());
+        if (avg_distance < avg_same_face_dist) {
+          assigned_avg_face = k;
+        }
+        // Mis-assigned face, stop comparing to other faces
+        if (assigned_avg_face != i && assigned_abs_face != i)
+          break;
+      }
+      if (assigned_abs_face == i)
+        ++num_abs_correct;
+      if (assigned_avg_face == i)
+        ++num_avg_correct;
+      cout<<"abs correct: "<<num_abs_correct<<" / "<<num_faces<<" ("<<(double)num_abs_correct / (double)num_faces<<"% accuracy"<<endl;
+      cout<<"avg correct: "<<num_avg_correct<<" / "<<num_faces<<" ("<<(double)num_avg_correct / (double)num_faces<<"% accuracy"<<endl;
+
+    }
+  }
+  cout<<"Using closest single image, assigned "<<num_abs_correct<<" correctly of "<< num_faces<<" faces, "<<(double)num_abs_correct / (double)num_faces<<"% accuracy"<<endl;
+  cout<<"Using closest average face, assigned "<<num_avg_correct<<" correctly of "<< num_faces<<" faces, "<<(double)num_avg_correct / (double)num_faces<<"% accuracy"<<endl;
 }
 
 deque<string> split_string(const string& str) {
