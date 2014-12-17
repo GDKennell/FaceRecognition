@@ -255,6 +255,9 @@ void PGMImage::clear() {
 // Preprocessing routines
 
 void PGMImage::identity_preprocess(){
+  gamma_correct(.2);
+  DoG(1,2, NONE);
+  contrast_equalize();
   set_ltps();
 }
 void PGMImage::DoG(double sigma1, double sigma2, edge_behavior_t edge_behavior){
