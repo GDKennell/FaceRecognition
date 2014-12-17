@@ -76,6 +76,7 @@ class PGMImage {
 		void DoG(double sigma1, double sigma2, edge_behavior_t edge_behavior);
 		void gaussian(double sigma, edge_behavior_t edge_behavior);
     void gamma_correct(double gamma);
+    void contrast_equalize();
 
   private:
     // return the average of the lower and upper binary pattern distances

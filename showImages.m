@@ -7,3 +7,5 @@
 %figure, imshow(imread('testDoG_edge_accumulate.pgm'));
 figure, imshow(imread('testDoG_mirror.pgm'));
 figure, imshow(imread('test_gamma_DoG_mirror.pgm'));
+figure, imshow(imread('testDoG_mirror_contrast.pgm'));
+figure, imshow(imread('test_gamma_DoG_mirror_contrast.pgm'));

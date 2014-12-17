@@ -13,8 +13,8 @@ int main(){
   test2.gamma_correct(.2);
 	test2.DoG(1, 2, EDGE_ACCUMULATE);
 	test2.save("../test_gamma_DoG_edge_accumulate.pgm");*/
-
-	PGMImage test2("../images/facea1.pgm");
+	
+  PGMImage test2("../images/facea1.pgm");
 	test2.DoG(1, 2, MIRROR);
 	test2.save("../testDoG_mirror.pgm");
 	
@@ -22,6 +22,17 @@ int main(){
   test3.gamma_correct(.2);
 	test3.DoG(1, 2, MIRROR);
 	test3.save("../test_gamma_DoG_mirror.pgm");
+
+	PGMImage test4("../images/facea1.pgm");
+	test4.DoG(1, 2, MIRROR);
+  test4.contrast_equalize();
+	test4.save("../testDoG_mirror_contrast.pgm");
+	
+  PGMImage test5("../images/facea1.pgm");
+  test5.gamma_correct(.2);
+	test5.DoG(1, 2, MIRROR);
+  test5.contrast_equalize();
+	test5.save("../test_gamma_DoG_mirror_contrast.pgm");
 
 	/*PGMImage test3("../images/facea1.pgm");
 	test3.DoG(1, 2, NONE);

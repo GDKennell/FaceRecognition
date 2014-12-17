@@ -2,6 +2,8 @@
 #include "PGMImage.h"
 #include <cstdlib>
 #include <deque>
+#include <cmath>
+
 
 typedef unsigned int uint;
 
@@ -287,6 +289,36 @@ void PGMImage::gamma_correct(double gamma){
   for(int x = 0; x < width_; x++)
     delete[] data_copy[x];
   delete[] data_copy;
+}
+
+void PGMImage::contrast_equalize(){
+  double a = .1;
+  double trim = 10;
+  double sum = 0;
+  for(int i = 0; i < width_; i++)
+    for(int j = 0; j < height_; j++)
+      sum += pow(data[i][j], a);
+  sum /= width_*height_;
+  sum = pow(sum, 1/a);
+  for(int i = 0; i < width_; i++){
+    for(int j = 0; j < height_; j++){
+      double normed = ((double)data[i][j])/sum;
+      data[i][j] = (uint)round(normed);
+    }
+  }
+  sum = 0;
+  for(int i = 0; i < width_; i++)
+    for(int j = 0; j < height_; j++)
+      sum += pow(min(trim, (double)data[i][j]), a);
+  sum /= width_*height_;
+  sum = pow(sum, 1/a);
+  for(int i = 0; i < width_; i++){
+    for(int j = 0; j < height_; j++){
+      double normed = ((double)data[i][j])/sum;
+      data[i][j] = (uint)round(normed);
+    }
+  }
+  
 }
 
 // tolerance within which a pixel is considered as 0
@@ -689,20 +721,6 @@ vector<vector<double> > gaussWindow(double sigma, int filterRadius){
       gaussYWindow[y][x] = i;
     }
   }
-	/*cout << "gaussWindowX(" << sigma << "):\n";
-	for(auto itX = gaussXWindow.begin(); itX != gaussXWindow.end(); itX++){
-		for(auto itY = itX->begin(); itY != itX->end(); itY++){
-			cout << *itY << "\t";
-		}
-		cout << endl;
-	}
-	cout << "gaussWindowY(" << sigma << "):\n";
-	for(auto itX = gaussYWindow.begin(); itX != gaussYWindow.end(); itX++){
-		for(auto itY = itX->begin(); itY != itX->end(); itY++){
-			cout << *itY << "\t";
-		}
-		cout << endl;
-	}*/
   double gaussSum = 0;
   for(int i = -filterRadius; i <= filterRadius; i++){
     for(int j = -filterRadius; j <= filterRadius; j++){
@@ -712,26 +730,12 @@ vector<vector<double> > gaussWindow(double sigma, int filterRadius){
       gaussSum += gaussXYWindow[y][x];
     }
   }
-	/*cout << "gaussWindowXY(" << sigma << ") un-normalized:\n";
-	for(auto itX = gaussXYWindow.begin(); itX != gaussXYWindow.end(); itX++){
-		for(auto itY = itX->begin(); itY != itX->end(); itY++){
-			cout << *itY << "\t";
-		}
-		cout << endl;
-	}*/
   for(int i = -filterRadius; i <= filterRadius; i++){
     for(int j = -filterRadius; j <= filterRadius; j++){
       int y = i + filterRadius, x = j + filterRadius;
       gaussXYWindow[y][x] /= gaussSum;
     }
   }
-	/*cout << "gaussWindow(" << sigma << ") normalized:\n";
-	for(auto itX = gaussXYWindow.begin(); itX != gaussXYWindow.end(); itX++){
-		for(auto itY = itX->begin(); itY != itX->end(); itY++){
-			cout << *itY << "\t";
-		}
-		cout << endl;
-	}*/
   return gaussXYWindow;
 }
 
