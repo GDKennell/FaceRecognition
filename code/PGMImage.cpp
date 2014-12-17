@@ -591,11 +591,11 @@ double PGMImage::ltp_match_distance(int x, int y, pair<uint, uint> ltp) const {
 
 double PGMImage::average_ltp_distance(PGMImage& other) const {
   double total_distance = 0;
-  for(int i = 1; i < width_ - 1; i++)
-    for(int j = 1; j < height_ - 1; j++)
+  for(int i = 10; i < width_ - 10; i++)
+    for(int j = 10; j < height_ - 10; j++)
       total_distance += ltp_match_distance(i, j, other(i, j));
 
-  return total_distance /= ((width_ - 2)*(height_ - 2));
+  return total_distance / ((width_ - 20)*(height_ - 20));
 }
 
 
