@@ -69,7 +69,7 @@ class PGMImage {
     // Computer Visiony operations
     // Compute the average ltp distance between this image and other 
     // over the entirety of the image. 
-    double average_ltp_distance(PGMImage& other) const;
+    double average_ltp_distance(const PGMImage& other) const;
     
     // Preprocessing routines. Each sets the ltps after completion
     void identity_preprocess(); // Do nothing 
