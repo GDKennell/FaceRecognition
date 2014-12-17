@@ -97,8 +97,10 @@ void PGMImage::load(const string& filename) {
   }
   string first_ln, comment_ln;
   getline(img_fs, first_ln);
+  getline(img_fs, comment_ln);
 
   img_fs >> width_ >> height_ >> grey_lvl_;
+  assert(width_ > 0 && height_ > 0);
   clear();
   data = new uint*[width_];
   for (int x = 0; x < width_; ++x) {
@@ -119,7 +121,7 @@ void PGMImage::load(const string& filename) {
   //cout << "in PGMImage::load:\tdone. Returning..." << endl;
 }
 
-void PGMImage::save(char* filename) const {
+void PGMImage::save(const char* filename) const {
   ofstream new_image;
   new_image.open(filename);
   if (!new_image) {

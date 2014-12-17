@@ -36,7 +36,7 @@ class PGMImage {
     
     // File I/O 
     void load(const string& filename);
-    void save(char* filename) const;
+    void save(const char* filename) const;
 
     // Store all data to file including LBP arrays
     // and precomputed LBP distances
